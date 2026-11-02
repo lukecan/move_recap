@@ -130,3 +130,19 @@ test("extras: swim strokes, strength sets, mind minutes, weather, places, shoes,
   assert.equal(s.shoes.list[0].name, "Test Shoe"); assert.equal(s.shoes.list[0].km, 100);
   assert.deepEqual(s.records.map(r => r.type), ["Best 5km Run"]);
 });
+
+test("places: districts roll up into their city, and runs without a Garmin place name still count", () => {
+  const Geo = require("../src/geo.js");
+  const cities = require("all-the-cities").filter(c => c.population >= 100000 || /^(PPLC|PPLA)$/.test(c.featureCode));
+  Geo.setData(cities.map(c => [c.name, c.country, c.loc.coordinates[1].toFixed(2), c.loc.coordinates[0].toFixed(2), c.population].join("|")).join("\n"));
+  assert.equal(Geo.nearest(36.88, 30.67).city, "Antalya");     // Muratpaşa
+  assert.equal(Geo.nearest(36.87, 30.62).city, "Antalya");     // Konyaaltı
+  assert.equal(Geo.nearest(37.56, 126.93).city, "Seoul");      // Seodaemun-gu
+  assert.equal(Geo.nearest(0, -150), null);                    // middle of the Pacific
+  const f = fixture(), acts = [...f.values()][0][0].summarizedActivitiesExport;
+  acts.forEach((a, i) => { if (i < 30) Object.assign(a, { startLatitude: 36.88, startLongitude: 30.67, locationName: i % 2 ? "Muratpasa" : "Konyaalti" }); else if (i < 34) Object.assign(a, { startLatitude: 37.56, startLongitude: 126.93 }); });
+  const s = PE.computeStats(f);
+  assert.deepEqual(s.places.list.map(c => [c.name, c.count]), [["Antalya", 30], ["Seoul", 4]]);
+  assert.equal(s.places.countries, 2);
+  Geo.setData("");   // back to "no list" for other tests
+});
