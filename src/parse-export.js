@@ -64,6 +64,33 @@
     };
   }
 
+  // Running cadence and power from per-activity rows { fam, secs, spm, avgW, np, maxW, rpm }, oldest first.
+  // Shared with the CSV parser so both paths give the same cards.
+  function motion(rows) {
+    const wmean = (list, pick) => { const t = list.reduce((s, r) => s + r.secs, 0); return t ? list.reduce((s, r) => s + pick(r) * r.secs, 0) / t : NaN; };
+    const runs = rows.filter(r => r.fam === "running" && r.secs >= 300 && r.spm >= 120 && r.spm <= 230);
+    const cadence = runs.length >= 5 ? {
+      runs: runs.length, spm: wmean(runs, r => r.spm),
+      first: mean(runs.slice(0, 5).map(r => r.spm)), last: mean(runs.slice(-5).map(r => r.spm)),
+    } : null;
+    const withW = fam => rows.filter(r => r.fam === fam && r.secs >= 300 && r.avgW > 0);
+    const rides = withW("cycling"), runP = withW("running");
+    const [sport, list] = rides.length >= 3 ? ["cycling", rides] : runP.length >= 5 ? ["running", runP] : [null, []];
+    let power = null;
+    if (sport) {
+      const spun = list.filter(r => r.rpm > 0);
+      power = {
+        sport, sessions: list.length,
+        kJ: list.reduce((s, r) => s + r.avgW * r.secs, 0) / 1000,
+        avgW: wmean(list, r => r.avgW),
+        bestNP: Math.max(0, ...list.map(r => r.np || 0)) || null,
+        maxW: Math.max(0, ...list.map(r => r.maxW || 0)) || null,
+        rpm: spun.length ? wmean(spun, r => r.rpm) : null,
+      };
+    }
+    return { cadence, power };
+  }
+
   function computeStats(files) {
     const acts = new Map(), uds = new Map(), nights = new Map(), fa = [];
     let profile = null;
@@ -150,6 +177,12 @@
     if (vo2.length >= 2) body.vo2 = [vo2[0], vo2.at(-1)];
     if (ages.length >= 2) body.fitnessAge = [ages[0].currentBioAge, ages.at(-1).currentBioAge];
 
+    const { cadence, power } = motion(A.map(a => ({
+      fam: family(a.activityType), secs: (a.duration || 0) / 1000,
+      spm: a.avgDoubleCadence || (a.avgRunCadence ? a.avgRunCadence * 2 : 0),   // avgRunCadence is per leg
+      avgW: a.avgPower, np: a.normPower, maxW: a.maxPower, rpm: a.avgBikeCadence,
+    })));
+
     const firstName = profile?.firstName || null;
     return {
       period: { mode: P.mode, label: P.label, range: P.range, year: P.year, start: P.start, end: P.end, days: P.days },
@@ -166,10 +199,11 @@
       sleep, body,
       sweatLiters: sweatMl / 1000,
       climbMeters: climb,
+      cadence, power,
     };
   }
 
-  const api = { computeStats, isWanted, family, PATTERNS };
+  const api = { computeStats, isWanted, family, motion, PATTERNS };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.ParseExport = api;
 })(typeof window !== "undefined" ? window : globalThis);
