@@ -133,7 +133,8 @@
         const ar = areaOf(e.category); areas[ar] = (areas[ar] || 0) + e.sets;
       }
       const fav = Object.entries(moves).sort((x, y) => y[1] - x[1])[0];
-      if (sets >= 20) strength = { sessions: lifts.length, sets, reps, favourite: fav ? fav[0] : null, favouriteSets: fav ? fav[1] : 0, areas };
+      if (sets >= 20) strength = { sessions: lifts.length, minutes: lifts.reduce((s, a) => s + (a.duration || 0), 0) / 6e4, moves: Object.keys(moves).length,
+        sets, reps, favourite: fav ? fav[0] : null, favouriteSets: fav ? fav[1] : 0, areas };
     }
 
     const calm = A.filter(a => /yoga|breathwork|meditation|pilates/.test(a.activityType));
@@ -158,7 +159,21 @@
       weather = { workouts: warm.length, hot: pick(hot, hot.maxTemperature), cold: pick(cold, cold.minTemperature) };
     }
 
-    // places: Garmin's location names, grouped across spellings (Muratpasa / Muratpaşa)
+    // places: the city each workout started in, from its start coordinates (offline list, see geo.js).
+    // Without the list (or coordinates), fall back to Garmin's location names, grouped across spellings.
+    const Geo = root.Geo || (typeof require !== "undefined" ? require("./geo.js") : null);
+    let places;
+    if (Geo && Geo.ready()) {
+      const cities = new Map(), countries = new Map();
+      for (const a of A) {
+        const hit = Geo.nearest(a.startLatitude, a.startLongitude);
+        if (!hit) continue;
+        const k = `${hit.city}|${hit.cc}`, c = cities.get(k) || { name: hit.city, cc: hit.cc, country: Geo.countryName(hit.cc), count: 0 };
+        c.count++; cities.set(k, c); countries.set(hit.cc, (countries.get(hit.cc) || 0) + 1);
+      }
+      const list = [...cities.values()].sort((x, y) => y.count - x.count);
+      places = list.length >= 2 ? { list, countries: countries.size } : null;
+    }
     const groups = new Map();
     for (const a of A) if (a.locationName) {
       const k = fold(a.locationName), g = groups.get(k) || { count: 0, names: {} };
@@ -167,7 +182,7 @@
     // show the spelling with local letters (Muratpaşa over Muratpasa), else the most common one
     const accented = n => /[^\x00-\x7f]/.test(n);
     const placeList = [...groups.values()].map(g => ({ name: Object.entries(g.names).sort((x, y) => accented(y[0]) - accented(x[0]) || y[1] - x[1])[0][0], count: g.count })).sort((x, y) => y.count - x.count);
-    const places = placeList.length >= 2 ? { list: placeList } : null;
+    if (places === undefined) places = placeList.length >= 2 ? { list: placeList, countries: null } : null;
 
     // shoes: distance of every activity logged with them, all time (shoe life isn't yearly)
     let shoes = null;

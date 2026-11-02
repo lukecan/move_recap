@@ -126,6 +126,9 @@ button { font: inherit; }
 .nav { position: absolute; z-index: 3; top: 60px; bottom: 0; background: none; border: 0; cursor: pointer; }
 .nav.prev { left: 0; width: 32%; } .nav.next { right: 0; width: 68%; }
 /* Contrast: secondary text on cards is 86% ink, which clears WCAG AA (4.5:1) on sea, lagoon, pomegranate and night */
+.card::before { content: ""; position: absolute; inset: 0; background: var(--pattern-light) center / cover no-repeat; pointer-events: none; }
+.c-totals::before, .c-sweat::before, .c-power::before, .c-records::before, .c-body::before { background-image: var(--pattern-dark); }
+.card > * { position: relative; }
 .card { --dim: rgba(255,248,238,.86); position: absolute; inset: 0; padding: 74px 24px 30px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; }
 .card > * { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
 .card > *:nth-child(2) { animation-delay: .07s } .card > *:nth-child(3) { animation-delay: .14s } .card > *:nth-child(4) { animation-delay: .21s } .card > *:nth-child(5) { animation-delay: .28s }
@@ -306,6 +309,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 
 <script src="vendor/zip.min.js"></script>
 <script src="js/insights.js"></script>
+<script src="js/geo.js"></script>
 <script src="js/parse-export.js"></script>
 <script src="js/parse-csv.js"></script>
 <script src="js/share.js"></script>

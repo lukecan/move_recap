@@ -21,12 +21,12 @@ const EXAMPLE = {
   cadence: { runs: 21, spm: 164, first: 160, last: 167 },
   power: { sport: "cycling", sessions: 14, kJ: 9800, avgW: 172, bestNP: 214, maxW: 612, rpm: 86 },
   swim: { swims: 22, strokes: 31800, km: 38, openKm: 9 },
-  strength: { sessions: 17, sets: 240, reps: 2600, favourite: "GOBLET_SQUAT", favouriteSets: 38, areas: { "legs & glutes": 96, core: 60, back: 44, "full body": 40 } },
+  strength: { sessions: 17, minutes: 690, moves: 31, sets: 240, reps: 2600, favourite: "GOBLET_SQUAT", favouriteSets: 38, areas: { "legs & glutes": 96, core: 60, back: 44, "full body": 40 } },
   mind: { sessions: 12, minutes: 260, kinds: { yoga: 8, meditation: 4 }, slowestBreath: 8.2, stressChange: -6 },
   shoes: { list: [{ name: "Trail runners", km: 610, maxKm: 700 }] },
   weather: { workouts: 80, hot: { c: 34, date: "Jul 21", sport: "running" }, cold: { c: -3, date: "Jan 12", sport: "walking & hiking" } },
   records: [{ type: "Best 5km Run", value: 1642, date: "2026-09-20", current: true }, { type: "Farthest Run", value: 21300, date: "2026-10-04", current: true }, { type: "Most Steps in a Day", value: 41000, date: "2026-09-14", current: true }],
-  places: { list: [{ name: "Lisbon", count: 61 }, { name: "Sintra", count: 9 }, { name: "Porto", count: 4 }, { name: "Madrid", count: 2 }] },
+  places: { countries: 2, list: [{ name: "Lisbon", country: "Portugal", count: 61 }, { name: "Porto", country: "Portugal", count: 9 }, { name: "Madrid", country: "Spain", count: 4 }, { name: "Seville", country: "Spain", count: 2 }] },
 };
 
 /* ---------- language (landing page only; cards stay English for now) ---------- */
@@ -132,8 +132,17 @@ const dist = (km, u) => Insights.distance(km, u);
 
 /* ---------- reading the ZIP ---------- */
 const status = (msg, err = false) => { const s = $("#status"); s.textContent = msg; s.classList.toggle("err", err); };
+// the offline city list is ~200 KB, so it loads only when a full export is opened
+let citiesLoading = null;
+const loadCities = () => citiesLoading ||= new Promise(res => {
+  if (Geo.ready()) return res();
+  const s = Object.assign(document.createElement("script"), { src: "js/cities.js" });
+  s.onload = s.onerror = () => res();   // without it, places fall back to Garmin's location names
+  document.head.appendChild(s);
+});
 async function readExport(file) {
   if (!/\.zip$/i.test(file.name)) throw new Error(T.en.errNotZip);
+  const cities = loadCities();
   zip.configure({ useWebWorkers: false });
   const reader = new zip.ZipReader(new zip.BlobReader(file));
   try {
@@ -145,6 +154,7 @@ async function readExport(file) {
       status(t("statusReading", i + 1, wanted.length, e.filename.split("/").pop().replace(/^[^_]*@[^_]*_/, "")));
       try { files.set(e.filename, JSON.parse(await e.getData(new zip.TextWriter()))); } catch (err) { console.warn("skipped", e.filename, err); }
     }
+    await cities;
     return ParseExport.computeStats(files);
   } finally { await reader.close(); }
 }
@@ -280,8 +290,10 @@ function endCard(s, shown, extraCount = 0) {
 
 /* ---------- share specs: what each card says, in a form Share.render can draw ---------- */
 const plain = html => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; };
+// a fingerprint of the year's numbers: the same recap always draws the same pattern, another person's never does
+const patternSeed = s => [s.period.start, s.totals.activities, s.totals.activeDays, Math.round(s.totals.hours), s.steps?.total || 0, s.name || ""].join("|");
 function shareSpecs(s, shown, extra = []) {
-  const base = { period: s.period.label, year: s.period.year || String(s.period.end || "").slice(0, 4) };
+  const base = { period: s.period.label, year: s.period.year || String(s.period.end || "").slice(0, 4), seed: patternSeed(s) };
   const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].hours - a[1].hours).slice(0, 4), maxH = fams[0]?.[1].hours || 1;
   const intro = { ...base, id: "intro", eyebrow: s.period.range,
     headline: s.source === "csv" ? `Your quick recap: ${num(t.activities)} activities.` : plain(introCard(s)[1].match(/<h1>(.*?)<\/h1>/)[1]),
@@ -319,6 +331,8 @@ function openStory(s) {
   $("#cards").innerHTML = list.map(([cls, html], i) => `<section class="card ${cls}" aria-label="Card ${i + 1} of ${list.length}" ${i ? "hidden" : ""}>${html}</section>`).join("");
   $("#bars").innerHTML = list.slice(0, endIdx + 1).map(() => "<span><i></i></span>").join("");
   cards = [...$("#cards").children]; bars = [...$("#bars").children];
+  const seed = patternSeed(s);
+  try { $("#cards").style.setProperty("--pattern-light", `url(${Share.patternUrl(seed, "#fff8ee", .09)})`); $("#cards").style.setProperty("--pattern-dark", `url(${Share.patternUrl(seed, "#1d1528", .08)})`); } catch { /* the pattern is decoration */ }
   $("#topLabel").textContent = s.period.label; $("#exampleTag").hidden = !s.example;
   $("#story").hidden = false; document.body.style.overflow = "hidden";
   $("#shareAll").addEventListener("click", () => openSheet("all"));

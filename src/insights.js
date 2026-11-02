@@ -386,7 +386,7 @@
 
   /* ------------------------------------------------------------ STRENGTH */
   const moveName = s => { const t = String(s || "").toLowerCase().replace(/_/g, " ").replace(/\btrx\b/, "TRX").replace(/\bbulgarian\b/, "Bulgarian").replace(/\brussian\b/, "Russian").replace(/\bromanian\b/, "Romanian"); return t.charAt(0).toUpperCase() + t.slice(1); };
-  // strength: { sessions, sets, reps, favourite, favouriteSets, areas: { area → sets } }
+  // strength: { sessions, minutes, moves, sets, favourite, favouriteSets, areas: { area → sets } }
   function strength({ strength: g }) {
     if (!g) return { id: "strength", skip: true, reason: "Fewer than 5 strength sessions with logged sets." };
     const areas = Object.entries(g.areas).sort((a, b) => b[1] - a[1]);
@@ -394,10 +394,11 @@
     const upper = ["chest", "back", "shoulders", "arms"].reduce((s, k) => s + (g.areas[k] || 0), 0) / g.sets;
     const persona = upper >= 0.5 ? "upper-body builder" : top === "legs & glutes" && share >= 0.35 ? "leg-day loyalist" : top === "core" && share >= 0.35 ? "core crusher" : "all-round lifter";
     return { id: "strength", skip: false, score: 0.55, persona,
-      headline: g.favourite ? `Your go-to move: ${moveName(g.favourite).replace(/^./, c => c.toLowerCase())}.` : `${num(g.sets)} sets, one rep at a time.`,
-      body: `${num(g.sets)} sets and ${num(g.reps)} reps over ${g.sessions} sessions. Most of the work went to your ${top}.`,
-      rows: areas.slice(0, 4).map(([a, n]) => [a, `${n} sets`, n / topSets]),
-      facts: [["sets", num(g.sets)], ["reps", num(g.reps)], ["favourite", moveName(g.favourite)]],
+      headline: g.favourite ? `Your go-to move: ${moveName(g.favourite).replace(/^./, c => c.toLowerCase())}.` : `${g.sessions} strength sessions.`,
+      // Garmin counts every exercise in a circuit as a "set", and reps are estimates, so the card talks in sessions, time and moves
+      body: `${g.sessions} sessions, ${g.minutes >= 120 ? `${(g.minutes / 60).toFixed(1).replace(/\.0$/, "")} hours` : `${num(g.minutes)} minutes`} and ${g.moves} different moves. Most of the work went to your ${top}.`,
+      rows: areas.slice(0, 4).map(([a, n]) => [a, `${Math.round(n / g.sets * 100)}%`, n / topSets]),
+      facts: [["sessions", String(g.sessions)], ["moves", String(g.moves)], ["favourite", moveName(g.favourite)]],
       trace: [`${g.sessions} sessions, ${g.sets} sets; top area ${top} ${Math.round(share * 100)}%, upper body ${Math.round(upper * 100)}% → ${persona}`] };
   }
 
@@ -476,15 +477,16 @@
   /* -------------------------------------------------------------- PLACES */
   // places: { list: [{ name, count }] } — Garmin's start-location names. Private: left out of shares unless chosen.
   function places({ places: pl }) {
-    if (!pl || pl.list.length < 2) return { id: "places", skip: true, reason: "Workouts started in fewer than 2 places." };
+    if (!pl || pl.list.length < 2) return { id: "places", skip: true, reason: "Workouts started in fewer than 2 cities." };
     const total = pl.list.reduce((s, x) => s + x.count, 0), [top] = pl.list, share = top.count / total;
-    const others = pl.list.slice(1, 4).map(x => x.name);
-    return { id: "places", skip: false, private: true, score: 0.4 + Math.min(0.25, pl.list.length / 40),
-      persona: pl.list.length >= 5 ? "explorer" : share >= 0.8 ? "home turf" : "on the move",
-      headline: `You trained in ${pl.list.length} places.`,
-      body: `${Math.round(share * 100)}% of your located workouts started in ${top.name}, with stops in ${others.join(", ").replace(/, ([^,]*)$/, " and $1")}.`,
-      rows: pl.list.slice(0, 4).map(x => [x.name, `${x.count}×`, x.count / top.count]),
-      facts: [["places", String(pl.list.length)], ["home", top.name]], trace: [pl.list.map(x => `${x.name} ${x.count}`).join(", ")] };
+    const others = pl.list.slice(1, 4).map(x => x.name), nc = pl.countries || 0;
+    const what = pl.countries == null ? "places" : "cities";
+    return { id: "places", skip: false, private: true, score: 0.4 + Math.min(0.25, pl.list.length / 40 + nc / 20),
+      persona: nc >= 3 || pl.list.length >= 5 ? "explorer" : share >= 0.8 ? "home turf" : "on the move",
+      headline: nc >= 2 ? `You trained in ${pl.list.length} cities across ${nc} countries.` : `You trained in ${pl.list.length} ${what}.`,
+      body: `${Math.round(share * 100)}% of your workouts with GPS started in ${top.name}, with stops in ${others.join(", ").replace(/, ([^,]*)$/, " and $1")}.`,
+      rows: pl.list.slice(0, 4).map(x => [x.country && nc >= 2 ? `${x.name}, ${x.country}` : x.name, `${x.count}×`, x.count / top.count]),
+      facts: [[what, String(pl.list.length)], ["countries", nc ? String(nc) : "—"], ["home", top.name]], trace: [pl.list.map(x => `${x.name} ${x.cc || ""} ${x.count}`).join(", ")] };
   }
 
   /* ------------------------------------------------------------- CADENCE */

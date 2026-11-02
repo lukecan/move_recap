@@ -28,8 +28,10 @@
 
   /* ------------------------------------------------------------------ themes */
   const ANTALYA_BG = { intro: "#0d3a5c", totals: "#ee6420", when: "#0d3a5c", zones: "#0c6b66", stress: "#a8213b", steps: "#0c6b66",
-    sleep: "#1e1a3a", sweat: "#ee6420", climb: "#0d3a5c", body: "#ecdcbc", end: "#0c6b66" };
-  const DARK_INK = new Set(["totals", "sweat", "body"]);
+    sleep: "#1e1a3a", sweat: "#ee6420", climb: "#0d3a5c", body: "#ecdcbc", end: "#0c6b66",
+    cadence: "#a8213b", power: "#ee6420", swim: "#0c6b66", strength: "#a8213b", mind: "#1e1a3a", shoes: "#0d3a5c",
+    weather: "#a8213b", records: "#ee6420", places: "#1e1a3a" };
+  const DARK_INK = new Set(["totals", "sweat", "body", "power", "records"]);
 
   const THEMES = {
     antalya: {
@@ -89,6 +91,34 @@
   function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
   function seeded(seed) { let s = 0; for (const c of String(seed)) s = (s * 31 + c.charCodeAt(0)) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
 
+  /* ---------------------------------------------------------------- pattern */
+  // Antalya's sea and sun, drawn from the person's own numbers: wave count, height, rhythm, tilt and
+  // where the sun sits all come from `seed`, inside fixed ranges, so every recap gets its own quiet pattern.
+  function pattern(ctx, w, h, seed, ink, alpha) {
+    const rnd = seeded(`antalya:${seed}`);
+    const n = 3 + Math.floor(rnd() * 4), amp = h * (.012 + rnd() * .022), freq = 1.2 + rnd() * 2.3, ph = rnd() * 6.28;
+    const top = h * (.6 + rnd() * .16), gap = h * (.03 + rnd() * .025), tilt = (rnd() - .5) * .22;
+    const sx = w * (.12 + rnd() * .76), sy = h * (.06 + rnd() * .2), rings = 2 + Math.floor(rnd() * 3), r0 = w * (.1 + rnd() * .14);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.5, w * .004); ctx.lineCap = "round";
+    ctx.translate(w / 2, h / 2); ctx.rotate(tilt); ctx.translate(-w / 2, -h / 2);
+    for (let i = 0; i < n; i++) {
+      ctx.beginPath();
+      for (let x = -w * .15; x <= w * 1.15; x += w / 90) {
+        const y = top + i * gap + amp * Math.sin(x / w * freq * Math.PI * 2 + ph + i * .8);
+        x === -w * .15 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    for (let j = 0; j < rings; j++) { ctx.beginPath(); ctx.arc(sx, sy, r0 + j * w * .045, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+  }
+  // the same pattern as an image for the story cards (light ink for dark cards, dark ink for light ones)
+  function patternUrl(seed, ink, alpha) {
+    const c = document.createElement("canvas"); c.width = 540; c.height = 960;
+    pattern(c.getContext("2d"), c.width, c.height, seed, ink, alpha);
+    return c.toDataURL("image/png");
+  }
+
   /* ------------------------------------------------------------- backgrounds */
   function background(ctx, F, theme, spec, C) {
     ctx.fillStyle = C.bg; ctx.fillRect(0, 0, F.w, F.h);
@@ -98,8 +128,9 @@
       else { g.addColorStop(0, "rgba(238,100,32,.95)"); g.addColorStop(1, "rgba(238,100,32,0)"); }
       ctx.fillStyle = g; ctx.fillRect(0, 0, F.w, F.h);
     }
+    if (theme === THEMES.antalya && spec.seed) pattern(ctx, F.w, F.h, spec.seed, C.ink, .09);
     if (theme === THEMES.topo) {
-      const rnd = seeded(spec.id + F.h);
+      const rnd = seeded((spec.seed || "") + spec.id + F.h);
       const hills = [[F.w * (.2 + rnd() * .6), F.h * (.3 + rnd() * .45)]];
       const ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28];
       hills.forEach(([hx, hy], k) => {
@@ -342,5 +373,5 @@
     return new Promise((res, rej) => canvas.toBlob(b => (b ? res(new File([b], name, { type: "image/png" })) : rej(new Error("Could not create image"))), "image/png"));
   }
 
-  root.Share = { render, toFile, THEMES, FORMATS };
+  root.Share = { render, toFile, patternUrl, THEMES, FORMATS };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -134,7 +134,9 @@ test("brand-new watch only gets the cards it has data for", () => {
     a3.match(I3.swim({ swim: { swims: 10, strokes: 20000, km: 40, openKm: 30 } }).body, /1\.2× a swim across the English Channel/);
     a3.equal(I3.swim({ swim: { swims: 10, strokes: 20000, km: 40, openKm: 30 } }).persona, "open-water swimmer");
     a3.match(I3.swim({ swim: { swims: 4, strokes: 3000, km: 1.2, openKm: 0 } }).body, /50% of the swim from Alcatraz/);
-    a3.match(I3.strength({ strength: { sessions: 6, sets: 60, reps: 600, favourite: "DUMBBELL_BULGARIAN_SPLIT_SQUAT", favouriteSets: 20, areas: { "legs & glutes": 40, core: 20 } } }).headline, /dumbbell Bulgarian split squat/);
+    const st = I3.strength({ strength: { sessions: 6, minutes: 250, moves: 14, sets: 60, reps: 600, favourite: "DUMBBELL_BULGARIAN_SPLIT_SQUAT", favouriteSets: 20, areas: { "legs & glutes": 40, core: 20 } } });
+    a3.match(st.headline, /dumbbell Bulgarian split squat/); a3.match(st.body, /6 sessions, 4\.2 hours and 14 different moves/);
+    a3.doesNotMatch(st.body, /reps|sets/); a3.deepEqual(st.rows.map(r => r[1]), ["67%", "33%"]);
     const m = I3.mind({ mind: { sessions: 5, minutes: 120, kinds: { breathwork: 4, yoga: 1 }, slowestBreath: 5.8, stressChange: -4 } });
     a3.match(m.headline, /6 breaths a minute/); a3.match(m.body, /dropped 4 points/); a3.equal(m.persona, "breath master");
     a3.match(I3.shoes({ shoes: { list: [{ name: "Pegasus", km: 600, maxKm: 650 }] } }).body, /Time to start looking/);
@@ -144,5 +146,7 @@ test("brand-new watch only gets the cards it has data for", () => {
     const r = I3.records({ records: [{ type: "Best 5km Run", value: 1642, date: "2026-09-20" }, { type: "Farthest Run", value: 21300, date: "2026-10-04" }] });
     a3.equal(r.private, true); a3.deepEqual(r.tiles, [["27:22", "5km run"], ["21 km", "farthest run"]]); a3.match(r.body, /Oct 4/);
     a3.equal(I3.places({ places: { list: [{ name: "Lisbon", count: 9 }, { name: "Porto", count: 1 }] } }).private, true);
+    const pl = I3.places({ places: { countries: 3, list: [{ name: "Antalya", country: "Türkiye", count: 70 }, { name: "Seoul", country: "South Korea", count: 4 }, { name: "Amsterdam", country: "Netherlands", count: 1 }] } });
+    a3.match(pl.headline, /3 cities across 3 countries/); a3.equal(pl.rows[1][0], "Seoul, South Korea");
   });
 }

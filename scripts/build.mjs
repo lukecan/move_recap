@@ -40,7 +40,16 @@ writeFileSync(join(DIST, "fonts", "fonts.css"), css);
 
 /* scripts */
 cpSync(nm("@zip.js/zip.js/dist/zip.min.js"), join(DIST, "vendor", "zip.min.js"));
-for (const f of ["insights.js", "parse-export.js", "parse-csv.js", "share.js"]) cpSync(join(ROOT, "src", f), join(DIST, "js", f));
+for (const f of ["insights.js", "geo.js", "parse-export.js", "parse-csv.js", "share.js"]) cpSync(join(ROOT, "src", f), join(DIST, "js", f));
+
+/* offline city list for the Places card: cities of 100k+ people plus capitals and province seats */
+{
+  const { createRequire } = await import("node:module");
+  const cities = createRequire(import.meta.url)("all-the-cities");
+  const rows = cities.filter(c => c.population >= 100000 || /^(PPLC|PPLA)$/.test(c.featureCode))
+    .map(c => [c.name, c.country, c.loc.coordinates[1].toFixed(2), c.loc.coordinates[0].toFixed(2), c.population].join("|"));
+  writeFileSync(join(DIST, "js", "cities.js"), `/* ${rows.length} cities from GeoNames (geonames.org, CC BY 4.0) via all-the-cities. Loaded only when a full export is opened. */\nGeo.setData(${JSON.stringify(rows.join("\n"))});\n`);
+}
 
 /* pages */
 const META = `
@@ -78,9 +87,10 @@ for (const page of readdirSync(join(ROOT, "app")).filter(f => f.endsWith(".html"
 for (const f of readdirSync(join(ROOT, "app")).filter(f => /\.(js|png|svg)$/.test(f))) cpSync(join(ROOT, "app", f), join(DIST, f));
 
 /* licenses: ours plus the full text of everything we ship */
-const lic = [["Wellbeing Recap", join(ROOT, "LICENSE")], ["zip.js", nm("@zip.js/zip.js/LICENSE")],
+const lic = [["Wellbeing Recap", join(ROOT, "LICENSE")], ["zip.js", nm("@zip.js/zip.js/LICENSE")], ["all-the-cities (code)", nm("all-the-cities/LICENSE")],
   ...Object.keys(FONTS).map(f => [`Font: ${f}`, nm(`@fontsource/${f}/LICENSE`)])];
-writeFileSync(join(DIST, "licenses.txt"), lic.map(([n, f]) => `==== ${n} ====\n\n${readFileSync(f, "utf8").trim()}\n`).join("\n"));
+writeFileSync(join(DIST, "licenses.txt"), lic.map(([n, f]) => `==== ${n} ====\n\n${readFileSync(f, "utf8").trim()}\n`).join("\n")
+  + "\n==== City data ====\n\nCity names, countries, coordinates and populations: GeoNames (https://www.geonames.org), licensed under\nCreative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/). Filtered to cities of 100,000+ people,\ncapitals and province seats; coordinates rounded to two decimals.\n");
 writeFileSync(join(DIST, "CNAME"), "recap.mertcangenc.com\n");
 writeFileSync(join(DIST, ".nojekyll"), "");
 

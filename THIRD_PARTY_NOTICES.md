@@ -4,7 +4,8 @@ The published site bundles the following third-party software and fonts. Their f
 
 | Component | Version | License | Source |
 |---|---|---|---|
-| zip.js | 2.22.1 | BSD 3-Clause, © 2023 Gildas Lormeau | https://github.com/gildas-lormeau/zip.js |
+| City list (GeoNames) | via all-the-cities 3.1.0 | Data: CC BY 4.0, © GeoNames (geonames.org); code: MIT | https://github.com/zeke/all-the-cities |
+| zip.js | 2.24.0 | BSD 3-Clause, © 2023 Gildas Lormeau | https://github.com/gildas-lormeau/zip.js |
 | Unbounded (font) | via @fontsource/unbounded 5.3.0 | SIL Open Font License 1.1, © 2022 The Unbounded Project Authors | https://github.com/googlefonts/unbounded |
 | Familjen Grotesk (font) | via @fontsource/familjen-grotesk 5.3.0 | SIL Open Font License 1.1, © 2021 The Familjen Grotesk Project Authors | https://github.com/Familjen-Sthlm/Familjen-Grotesk |
 | JetBrains Mono (font) | via @fontsource/jetbrains-mono 5.3.0 | SIL Open Font License 1.1, © 2020 The JetBrains Mono Project Authors | https://github.com/JetBrains/JetBrainsMono |
