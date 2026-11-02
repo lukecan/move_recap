@@ -236,24 +236,49 @@ function endCard(s, shown) {
     ...identity(shown).map(c => [c.persona, TITLES[c.id].toLowerCase()])].slice(0, 6);
   return ["c-end", `<span class="persona">${esc(s.period.label)}</span><h2>${s.name ? esc(s.name) + "'s" : "Your"} recap</h2>
     <div class="summary">${tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
-    <button class="share" id="share" type="button">Copy summary</button><div class="toast" id="toast" role="status"></div>
+    <button class="share" id="shareAll" type="button">Share my recap ↗</button>
     <a class="fb" href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Tell us what you think →</a>
     <div class="foot">Your data never left this page</div>`];
 }
 
+/* ---------- share specs: what each card says, in a form Share.render can draw ---------- */
+const plain = html => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; };
+function shareSpecs(s, shown) {
+  const base = { period: s.period.label, year: s.period.year || String(s.period.end || "").slice(0, 4) };
+  const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].hours - a[1].hours).slice(0, 4), maxH = fams[0]?.[1].hours || 1;
+  const intro = { ...base, id: "intro", eyebrow: s.period.range,
+    headline: s.source === "csv" ? `Your quick recap: ${num(t.activities)} activities.` : plain(introCard(s)[1].match(/<h1>(.*?)<\/h1>/)[1]),
+    body: "Your runs, your rest days, your nights and everything in between." };
+  const totals = { ...base, id: "totals", eyebrow: "In total", big: [num(t.activities), `activities · ${num(t.activeDays)} active days`],
+    viz: { type: "rows", rows: fams.map(([f, v]) => [f, `${v.count}×${v.km >= 1 ? " · " + dist(v.km, s.units) : " · " + num(v.hours) + " h"}`, v.hours / maxH]) } };
+  const insight = c => ({ ...base, id: c.id, eyebrow: TITLES[c.id], chip: c.persona, headline: c.headline, body: c.body,
+    big: c.beforeAfter ? null : c.hero || null,
+    viz: c.id === "when" ? { type: "clock", byHour: s.byHour } : c.id === "zones" ? { type: "zones", shares: c.shares }
+      : c.id === "stress" ? { type: "bars", rows: c.byDay } : c.beforeAfter ? { type: "ba", rows: c.beforeAfter } : null });
+  const end = { ...base, id: "end", eyebrow: s.period.label, headline: `${s.name ? s.name + "'s" : "My"} ${s.period.mode === "year" ? s.period.label : "recap"}`,
+    viz: { type: "tiles", tiles: plainTiles(s, shown) } };
+  return [intro, totals, ...shown.map(insight), ...(s.source === "csv" ? [null] : []), end];
+}
+function plainTiles(s, shown) {
+  const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].km - a[1].km);
+  return [[num(t.activities), "activities"], [num(t.activeDays), "active days"],
+    ...fams.filter(([, v]) => v.km >= 1).slice(0, 2).map(([f, v]) => [dist(v.km, s.units), f]),
+    ...identity(shown).map(c => [c.persona, TITLES[c.id].toLowerCase()])].slice(0, 6);
+}
+
 /* ---------- story player ---------- */
-let cards = [], bars = [], idx = 0, t0 = 0, elapsed = 0, paused = false, raf = 0, summary = "";
+let cards = [], bars = [], idx = 0, t0 = 0, elapsed = 0, paused = false, raf = 0, summary = "", specs = [], current = null;
 const DUR = 15000, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function openStory(s) {
   const d = Insights.deck(s);
   const list = [introCard(s), totalsCard(s), ...d.shown.map(c => insightCard(c, s)), ...(s.source === "csv" ? [moreCard(s)] : []), endCard(s, d.shown)];
-  summary = summaryText(s, d.shown);
+  summary = summaryText(s, d.shown); specs = shareSpecs(s, d.shown); current = s;
   $("#cards").innerHTML = list.map(([cls, html], i) => `<section class="card ${cls}" aria-label="Card ${i + 1} of ${list.length}" ${i ? "hidden" : ""}>${html}</section>`).join("");
   $("#bars").innerHTML = list.map(() => "<span><i></i></span>").join("");
   cards = [...$("#cards").children]; bars = [...$("#bars").children];
   $("#topLabel").textContent = s.period.label; $("#exampleTag").hidden = !s.example;
   $("#story").hidden = false; document.body.style.overflow = "hidden";
-  $("#share").addEventListener("click", copySummary);
+  $("#shareAll").addEventListener("click", () => openSheet("all"));
   paused = reduce; setPause(); show(0);
   cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
   $("#next").focus();
@@ -263,6 +288,7 @@ function show(n) {
   idx = Math.max(0, Math.min(cards.length - 1, n)); elapsed = 0; t0 = performance.now();
   cards.forEach((c, i) => (c.hidden = i !== idx));
   $("#stage").classList.toggle("light", ["c-body", "c-totals", "c-sweat"].some(c => cards[idx].classList.contains(c)));
+  $("#shareCard").hidden = !specs[idx] || cards[idx].classList.contains("c-end");
   bars.forEach((b, i) => { b.className = i < idx ? "done" : ""; b.firstChild.style.width = ""; });
   cards[idx].querySelectorAll(":scope > *").forEach(el => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });
 }
@@ -276,17 +302,73 @@ function tick(now) {
 }
 function setPause() { const b = $("#pause"); b.textContent = paused ? "▶" : "❚❚"; b.setAttribute("aria-label", paused ? "Play" : "Pause"); }
 function togglePause(force) { const want = force ?? !paused; if (want === paused) return; if (want) elapsed += performance.now() - t0; else t0 = performance.now(); paused = want; setPause(); }
-async function copySummary() {
-  const t = $("#toast");
-  try { await navigator.clipboard.writeText(summary); t.textContent = "Summary copied. Paste it anywhere."; }
-  catch { t.textContent = summary.split("\n").join(" · "); }
+/* ---------- share sheet ---------- */
+const sheetState = { scope: "card", theme: (() => { try { return localStorage.getItem("wr-theme") || "antalya"; } catch { return "antalya"; } })(), format: "story" };
+let prepared = { key: "", files: [] }, previewUrl = "", wasPaused = false, lastFocus = null, prepToken = 0;
+const caption = () => `${summary}\n\nMade free at recap.mertcangenc.com #WellbeingRecap`;
+const fileName = (sp, i) => `wellbeing-recap-${String(i + 1).padStart(2, "0")}-${sp.id}-${sheetState.theme}-${sheetState.format}.png`;
+function syncChips() {
+  document.querySelectorAll("#sheet .chips").forEach(g => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === sheetState[g.dataset.opt])));
+  const canShareFiles = !!(navigator.canShare && navigator.share);
+  $("#sheetShare").textContent = canShareFiles ? (sheetState.scope === "all" ? "Share all cards" : "Share") : (sheetState.scope === "all" ? "Download all cards" : "Download image");
+  $("#sheetSave").hidden = !canShareFiles;
 }
+async function prepare() {
+  const token = ++prepToken, key = `${sheetState.scope}|${sheetState.theme}|${sheetState.format}|${idx}`;
+  $("#sheetShare").disabled = true; $("#sheetNote").textContent = "Preparing your image…"; syncChips();
+  const list = sheetState.scope === "all" ? specs.map((sp, i) => [sp, i]).filter(([sp]) => sp) : [[specs[idx], idx]];
+  const files = [];
+  for (const [sp, i] of list) {
+    const canvas = await Share.render(sp, { theme: sheetState.theme, format: sheetState.format });
+    if (token !== prepToken) return;               // a newer choice replaced this one
+    files.push(await Share.toFile(canvas, fileName(sp, i)));
+    if (files.length === 1 || i === idx) { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(files.at(-1)); $("#sheetImg").src = previewUrl; }
+  }
+  prepared = { key, files };
+  $("#sheetShare").disabled = false;
+  $("#sheetNote").textContent = sheetState.scope === "all" ? `${files.length} images ready.` : "Ready.";
+}
+function openSheet(scope = "card") {
+  if (!specs[idx] && scope === "card") return;
+  sheetState.scope = scope; wasPaused = paused; togglePause(true); lastFocus = document.activeElement;
+  $("#sheet").hidden = false; syncChips(); prepare(); $("#sheetClose").focus();
+}
+function closeSheet() { $("#sheet").hidden = true; prepToken++; togglePause(wasPaused); (lastFocus || $("#next")).focus(); }
+function download(files) {
+  files.forEach((f, n) => setTimeout(() => {
+    const url = URL.createObjectURL(f), a = Object.assign(document.createElement("a"), { href: url, download: f.name });
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }, n * 350));
+}
+$("#shareCard").addEventListener("click", () => openSheet("card"));
+$("#sheetClose").addEventListener("click", closeSheet);
+$("#sheet").addEventListener("click", e => { if (e.target.id === "sheet") closeSheet(); });
+$("#sheet").addEventListener("click", e => {
+  const b = e.target.closest(".chips button"); if (!b) return;
+  const opt = b.parentElement.dataset.opt; sheetState[opt] = b.dataset.v;
+  if (opt === "theme") { try { localStorage.setItem("wr-theme", b.dataset.v); } catch {} }
+  prepare();
+});
+// Files are rendered before the tap, so the share call keeps the tap's user activation (Safari needs that).
+$("#sheetShare").addEventListener("click", async () => {
+  const files = prepared.files; if (!files.length) return;
+  if (navigator.canShare && navigator.share && navigator.canShare({ files })) {
+    try { await navigator.share({ files, text: caption() }); $("#sheetNote").textContent = "Shared. Thanks for spreading the word!"; }
+    catch (e) { if (e.name !== "AbortError") { download(files); $("#sheetNote").textContent = "Sharing isn't available here, so we downloaded the images."; } }
+  } else { download(files); $("#sheetNote").textContent = files.length > 1 ? `Downloading ${files.length} images…` : "Downloaded."; }
+});
+$("#sheetSave").addEventListener("click", () => { download(prepared.files); $("#sheetNote").textContent = "Downloaded."; });
+$("#sheetCaption").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(caption()); $("#sheetNote").textContent = "Caption copied. Paste it under your post."; }
+  catch { $("#sheetNote").textContent = caption().split("\n").filter(Boolean).join(" · "); }
+});
 $("#next").addEventListener("click", () => show(idx + 1));
 $("#prev").addEventListener("click", () => show(idx - 1));
 $("#pause").addEventListener("click", () => togglePause());
 $("#close").addEventListener("click", closeStory);
 document.addEventListener("keydown", e => {
   if ($("#story").hidden) return;
+  if (!$("#sheet").hidden) { if (e.key === "Escape") closeSheet(); return; }
   if (e.key === "ArrowRight") show(idx + 1); else if (e.key === "ArrowLeft") show(idx - 1);
   else if (e.key === "Escape") closeStory();
   else if (e.key === " ") { e.preventDefault(); togglePause(); }
