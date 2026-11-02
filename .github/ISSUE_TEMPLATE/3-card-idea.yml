@@ -1,0 +1,24 @@
+name: "💡 Card idea"
+description: Suggest a new card, persona or fun comparison.
+title: "[Idea] "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: "Ideas from real athletes make the best cards. *Türkçe yazabilirsin.*"
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should the card say?
+      placeholder: "\"You swam the length of the Bosphorus 4 times.\""
+    validations:
+      required: true
+  - type: dropdown
+    id: sport
+    attributes:
+      label: Which sport is it about?
+      options: [Running, Swimming, Cycling, "Walking / hiking", Strength, "Yoga / breathwork", "Sleep / stress / wellbeing", "Any sport"]
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would people love it?

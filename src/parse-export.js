@@ -123,6 +123,9 @@
     const stressByWeekday = Object.fromEntries(Object.entries(stressVals).map(([d, v]) => [d, mean(v)]));
     const best = U.reduce((m, u) => (u.totalSteps > (m?.totalSteps || 0) ? u : m), null);
     const totalSteps = U.reduce((s, u) => s + u.totalSteps, 0);
+    // Garmin's own daily distance (stride-calibrated); fall back to a step estimate only when missing
+    const measured = U.filter(u => u.totalDistanceMeters > 0);
+    const distanceKm = measured.length >= U.length * 0.8 ? U.reduce((s, u) => s + (u.totalDistanceMeters || u.totalSteps * 0.75), 0) / 1000 : null;
 
     /* sleep: nights of 3 h or more */
     const N = [...nights.values()].filter(n => P.inPeriod(n.calendarDate))
@@ -159,7 +162,7 @@
       byHour, byWeekday,
       zoneHours: zoneMs.map(ms => ms / 3.6e6),
       stressByWeekday, days: stressDays,
-      steps: { total: totalSteps, days: U.length, bestDay: best ? { date: prettyDate(best.calendarDate), steps: best.totalSteps } : null },
+      steps: { total: totalSteps, days: U.length, distanceKm, bestDay: best ? { date: prettyDate(best.calendarDate), steps: best.totalSteps } : null },
       sleep, body,
       sweatLiters: sweatMl / 1000,
       climbMeters: climb,

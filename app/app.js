@@ -29,13 +29,24 @@ const T = {
     errNotCsv: "This CSV doesn't look like Garmin Connect's activity list. Use “Export CSV” on the Activities page.",
     errNoData: "No activities or daily summaries found. Is this a Garmin Connect data export?",
     errEmptyCsv: "No activities found in this CSV.",
+    statusUnits: "One question before your quick recap: which units does your Garmin use?",
+    calTitle: "Garmin export ready? Open your Wellbeing Recap",
+    calBody: "Check your email for Garmin's download link, then drop the ZIP at https://recap.mertcangenc.com",
+    calFile: "wellbeing-recap-reminder.ics",
   },
   tr: {
     h1: "Sporla geçen yılın. <em>Ücretsiz.</em> Abonelik yok.",
     lede: "Garmin verilerini bırak, yılını bir hikâye olarak gör: ne zaman hareket ettiğin, kalbinin nasıl değiştiği, nasıl uyuduğun ve nasıl bir sporcu olduğun.",
     uploadLabel: "Dosyanı yükle",
-    unitsLegend: "Garmin birimlerin", metric: "Metrik", imperial: "Emperyal",
-    unitsNote: "Garmin Connect hesabında hangisi seçiliyse onu seç. CSV dosyası birim belirtmediği için bu önemli.",
+    unitsLegend: "Garmin'in hangi birimleri kullanıyor?", metric: "Metrik", imperial: "Emperyal",
+    unitsNote: "Aktivite CSV'n bunu söylemiyor. Garmin Connect hesabında ne görüyorsan onu seç.",
+    unitsGo: "Hızlı özetimi hazırla",
+    previewLabel: "Örnek bir özete göz at", previewTag: "Örnek · oynatmak için dokun",
+    remindText: "Talep ettin mi? 2 gün sonrası için hatırlatıcı ekle:", remindGoogle: "Google Takvim", remindApple: "Apple Takvim",
+    statusUnits: "Hızlı özetinden önce tek bir soru: Garmin'in hangi birimleri kullanıyor?",
+    calTitle: "Garmin export'un hazır mı? Wellbeing Recap'ini aç",
+    calBody: "Garmin'in indirme bağlantısı için e-postana bak, sonra ZIP'i https://recap.mertcangenc.com adresine bırak.",
+    calFile: "wellbeing-recap-hatirlatici.ics",
     pill: "Cihazında işlenir · hiçbir şey yüklenmez",
     dropTitle: "Garmin export ZIP'ini ya da aktivite CSV'ni buraya bırak",
     dropSub: "ya da dosyayı seçmek için dokun",
@@ -51,7 +62,7 @@ const T = {
     f1t: "Verin sende kalır", f1: "Dosya bu sayfanın içinde okunur. Sunucu yok, hesap yok, takip yok.",
     f2t: "Sadece gerekenler", f2: "Aktivite özetlerini, günlük istatistikleri, uykuyu ve fitness yaşını okuruz. Ham GPS dosyalarına dokunmayız.",
     f3t: "İlk gününden itibaren", f3: "Saatini bu yıl mı aldın? Özetin aldığın günden başlar. Değilse bütün takvim yılını kapsar.",
-    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Açık kaynak (MIT)</a>',
+    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a>',
     statusOpening: "Dosyan açılıyor…", statusReading: (i, n, f) => `Okunuyor (${i}/${n}): ${f}`, statusFailed: "Dosya okunurken bir sorun çıktı.",
     errNotZip: "Lütfen Garmin'in e-postasındaki .zip dosyasını (açmadan) ya da aktivite listesinin .csv dosyasını seç.",
     errNotExport: "Bu ZIP bir Garmin Connect export'una benzemiyor. “Request Data Export” sonrası Garmin'in e-postayla gönderdiği dosyayı kullan.",
@@ -62,12 +73,14 @@ const T = {
 };
 const ENGLISH = {};
 document.querySelectorAll("[data-i18n]").forEach(el => (ENGLISH[el.dataset.i18n] = el.innerHTML));
+document.querySelectorAll("[data-i18n-label]").forEach(el => (ENGLISH[el.dataset.i18nLabel] = el.getAttribute("aria-label")));
 let lang = (() => { try { const v = localStorage.getItem("wr-lang"); if (v === "en" || v === "tr") return v; } catch (e) {} return /^tr\b/i.test(navigator.language || "") ? "tr" : "en"; })();
 const t = (key, ...args) => { const v = (T[lang] && T[lang][key]) ?? T.en[key] ?? ENGLISH[key]; return typeof v === "function" ? v(...args) : v; };
 function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = lang === "en" ? ENGLISH[el.dataset.i18n] : (T[lang][el.dataset.i18n] ?? ENGLISH[el.dataset.i18n]); });
-  document.querySelectorAll("[data-i18n-label]").forEach(el => el.setAttribute("aria-label", lang === "tr" ? T.tr[el.dataset.i18nLabel] : "Upload your export"));
+  document.querySelectorAll("[data-i18n-label]").forEach(el => el.setAttribute("aria-label", (lang === "tr" && T.tr[el.dataset.i18nLabel]) || ENGLISH[el.dataset.i18nLabel]));
+  setCalendarLink();
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
 }
 document.querySelector(".lang").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; lang = b.dataset.lang; try { localStorage.setItem("wr-lang", lang); } catch (err) {} applyLang(); status(""); });
@@ -79,8 +92,17 @@ const localError = e => { const m = String(e?.message || ""); const hit = ERRORS
 /* ---------- units ---------- */
 const IMPERIAL_LOCALES = /^(en-US|en-LR|my)(-|$)/i;
 let units = (() => { try { const v = localStorage.getItem("wr-units"); if (v === "metric" || v === "imperial") return v; } catch (e) {} return IMPERIAL_LOCALES.test(navigator.language || "") ? "imperial" : "metric"; })();
+// ZIP exports are always metric inside, so units only change wording there; we ask only when a CSV arrives.
 $("#u-" + units).checked = true;
-$("#units").addEventListener("change", e => { units = e.target.value; try { localStorage.setItem("wr-units", units); } catch (err) {} });
+$("#units").addEventListener("change", e => { if (e.target.name !== "units") return; units = e.target.value; try { localStorage.setItem("wr-units", units); } catch (err) {} });
+let pendingCsv = null;
+$("#unitsGo").addEventListener("click", async () => {
+  const file = pendingCsv; pendingCsv = null; $("#units").hidden = true;
+  if (!file) return;
+  status(t("statusOpening"));
+  try { const stats = await readCsv(file); stats.units = units; status(""); openStory(stats); }
+  catch (e) { console.warn(e); status(localError(e), true); }
+});
 const dist = (km, u) => Insights.distance(km, u);
 
 /* ---------- reading the ZIP ---------- */
@@ -108,8 +130,15 @@ async function readCsv(file) {
 }
 async function handle(file) {
   if (!file) return;
+  if (/\.csv$/i.test(file.name)) {
+    pendingCsv = file; $("#units").hidden = false; status(t("statusUnits"));
+    $("#units").scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    $("#u-" + units).focus();
+    return;
+  }
+  $("#units").hidden = true; pendingCsv = null;
   status(t("statusOpening"));
-  try { const stats = /\.csv$/i.test(file.name) ? await readCsv(file) : await readExport(file); stats.units = units; status(""); openStory(stats); }
+  try { const stats = await readExport(file); stats.units = units; status(""); openStory(stats); }
   catch (e) { console.warn(e); status(localError(e), true); }
 }
 const drop = $("#drop");
@@ -118,6 +147,33 @@ $("#file").addEventListener("change", e => handle(e.target.files[0]));
 ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
 drop.addEventListener("drop", e => handle(e.dataTransfer.files[0]));
 $("#example").addEventListener("click", () => openStory({ ...EXAMPLE, units }));
+$("#preview").addEventListener("click", () => openStory({ ...EXAMPLE, units }));
+
+/* ---------- "remind me" for the 1–2 day export wait (no server: a calendar link and an .ics file) ---------- */
+function reminderTimes() {
+  const start = new Date(); start.setDate(start.getDate() + 2); start.setHours(19, 0, 0, 0);
+  const end = new Date(start.getTime() + 15 * 60000);
+  const z = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return { start, end, s: z(start), e: z(end) };
+}
+function setCalendarLink() {
+  const r = reminderTimes();
+  const q = new URLSearchParams({ action: "TEMPLATE", text: t("calTitle"), dates: `${r.s}/${r.e}`, details: t("calBody") });
+  $("#gcal").href = "https://calendar.google.com/calendar/render?" + q.toString();
+}
+$("#ical").addEventListener("click", () => {
+  const r = reminderTimes(), esc = s => s.replace(/[\\;,]/g, m => "\\" + m);
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Wellbeing Recap//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT", `UID:${Date.now()}@recap.mertcangenc.com`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,
+    `DTSTART:${r.s}`, `DTEND:${r.e}`, `SUMMARY:${esc(t("calTitle"))}`, `DESCRIPTION:${esc(t("calBody"))}`, "URL:https://recap.mertcangenc.com",
+    "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${esc(t("calTitle"))}`, "TRIGGER:PT0M", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: t("calFile") });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+});
+setCalendarLink();
 
 /* ---------- card visuals ---------- */
 function vizWhen(byHour) {
@@ -181,12 +237,13 @@ function endCard(s, shown) {
   return ["c-end", `<span class="persona">${esc(s.period.label)}</span><h2>${s.name ? esc(s.name) + "'s" : "Your"} recap</h2>
     <div class="summary">${tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
     <button class="share" id="share" type="button">Copy summary</button><div class="toast" id="toast" role="status"></div>
+    <a class="fb" href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Tell us what you think →</a>
     <div class="foot">Your data never left this page</div>`];
 }
 
 /* ---------- story player ---------- */
 let cards = [], bars = [], idx = 0, t0 = 0, elapsed = 0, paused = false, raf = 0, summary = "";
-const DUR = 7000, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DUR = 15000, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function openStory(s) {
   const d = Insights.deck(s);
   const list = [introCard(s), totalsCard(s), ...d.shown.map(c => insightCard(c, s)), ...(s.source === "csv" ? [moreCard(s)] : []), endCard(s, d.shown)];

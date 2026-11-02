@@ -43,6 +43,27 @@ button { font: inherit; }
 .lang button { background: none; border: 0; color: var(--dim); font-family: var(--f-data); font-size: 12px; letter-spacing: .08em; padding: 6px 12px; cursor: pointer; }
 .lang button[aria-pressed="true"] { background: var(--ink); color: var(--night); }
 .brand { font-family: var(--f-data); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); }
+.hero-row { display: grid; grid-template-columns: 1fr 300px; gap: 28px; align-items: center; }
+@media (max-width: 720px) { .hero-row { grid-template-columns: 1fr; } }
+.preview { position: relative; height: 330px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--ink); font-family: var(--f-body); }
+.pv { position: absolute; width: 168px; height: 290px; border-radius: 16px; padding: 18px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; text-align: left; box-shadow: 0 18px 40px rgba(0,0,0,.4); transition: transform .3s; overflow: hidden; }
+.pv i { font-style: normal; font-family: var(--f-data); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.pv b { font-family: var(--f-display); font-weight: 700; font-size: 15px; line-height: 1.1; }
+.pv .pv-big { font-weight: 900; font-size: 42px; line-height: .9; }
+.pv em { align-self: flex-start; font-style: normal; font-family: var(--f-data); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 99px; padding: 3px 7px; }
+.pv1 { left: 0; top: 30px; background: var(--orange); color: var(--ink-dark); transform: rotate(-7deg); }
+.pv2 { left: 66px; top: 4px; background: var(--sea); transform: rotate(1deg); z-index: 1; }
+.pv3 { left: 132px; top: 34px; background: var(--pome); transform: rotate(7deg); align-items: flex-end; text-align: right; }
+.pv1 b, .pv1 i, .pv3 b, .pv3 i { max-width: 74px; } .pv1 .pv-big, .pv3 .pv-big { font-size: 34px; } /* side cards only show their outer edge */
+.preview:hover .pv1 { transform: rotate(-9deg) translateX(-6px); } .preview:hover .pv3 { transform: rotate(9deg) translateX(6px); }
+.pv-tag { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 2; white-space: nowrap; font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; background: var(--ink); color: var(--night); border-radius: 99px; padding: 6px 12px; }
+@media (max-width: 720px) { .preview { height: 300px; max-width: 320px; width: 100%; margin: 0 auto; } }
+@media (prefers-reduced-motion: reduce) { .pv { transition: none; } }
+.go { flex-basis: 100%; max-width: 280px; margin: 4px auto 0; font: 600 15px var(--f-body); color: var(--night); background: var(--orange); border: 0; border-radius: 999px; padding: 12px 18px; cursor: pointer; }
+.remind { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--panel); border-radius: 14px; padding: 14px; }
+.remind span { color: var(--dim); font-size: 14.5px; }
+.remind-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.remind .ghost { text-decoration: none; font-size: 14px; padding: 8px 14px; }
 .pitch { display: flex; flex-direction: column; gap: 14px; }
 .pitch h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(36px, 8vw, 64px); line-height: .98; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
 .pitch h1 em { font-style: normal; color: var(--orange); }
@@ -60,7 +81,7 @@ button { font: inherit; }
 .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
 .pill { font-family: var(--f-data); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); display: flex; gap: 8px; align-items: center; }
 .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4fd18b; }
-.units { border: 0; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; }
+.units { border: 0; margin: 14px 0 0; padding: 16px 14px; background: var(--panel); border-radius: 18px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; }
 .units legend { float: left; width: 100%; padding: 0; text-align: center; font-family: var(--f-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .units label { position: relative; cursor: pointer; }
 .units input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
@@ -136,6 +157,7 @@ button { font: inherit; }
 .summary b { display: block; font-family: var(--f-display); font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
 .summary span { font-size: 12px; color: var(--dim); }
 .share { position: relative; z-index: 4; align-self: flex-start; font-weight: 600; color: var(--ink-dark); background: var(--ink); border: 0; border-radius: 999px; padding: 12px 20px; cursor: pointer; }
+.fb { position: relative; z-index: 4; align-self: flex-start; color: var(--ink); font-size: 14px; }
 .toast { font-family: var(--f-data); font-size: 12px; color: var(--dim); min-height: 1em; }
 .example { position: absolute; z-index: 6; bottom: 10px; left: 50%; transform: translateX(-50%); font-family: var(--f-data); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; background: var(--orange); color: var(--ink-dark); padding: 4px 10px; border-radius: 999px; }
 svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -157,17 +179,26 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 <main class="landing" id="landing">
   <div class="topbar"><span class="brand">Wellbeing Recap</span>
     <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div></div>
+  <div class="hero-row">
   <section class="pitch">
     <h1 data-i18n="h1">Your year in sport. <em>Free.</em> No subscription.</h1>
     <p data-i18n="lede">Drop in your Garmin data export and get your year as a story: when you move, how your heart changed, how you slept, what kind of athlete you are.</p>
   </section>
+  <button class="preview" id="preview" type="button" data-i18n-label="previewLabel" aria-label="See an example recap">
+    <span class="pv pv1"><i>In total</i><b class="pv-big">96</b><i>activities</i></span>
+    <span class="pv pv2"><i>When you move</i><em>weekend warrior</em><b>Weekdays are for work. Weekends are for you.</b></span>
+    <span class="pv pv3"><i>Climbing</i><b class="pv-big">1.6×</b><b>Everest</b></span>
+    <span class="pv-tag" data-i18n="previewTag">Example · tap to play</span>
+  </button>
+  </div>
 
   <section data-i18n-label="uploadLabel" aria-label="Upload your export">
-    <fieldset class="units" id="units">
-      <legend data-i18n="unitsLegend">Your Garmin units</legend>
+    <fieldset class="units" id="units" hidden>
+      <legend data-i18n="unitsLegend">Which units does your Garmin use?</legend>
       <label><input type="radio" name="units" id="u-metric" value="metric"><span><span data-i18n="metric">Metric</span><small>km · m</small></span></label>
       <label><input type="radio" name="units" id="u-imperial" value="imperial"><span><span data-i18n="imperial">Imperial</span><small>mi · ft</small></span></label>
-      <p data-i18n="unitsNote">Pick what your Garmin Connect account uses. It matters for the CSV, which doesn't say.</p>
+      <p data-i18n="unitsNote">Your activities CSV doesn't say. Pick what your Garmin Connect account shows.</p>
+      <button class="go" id="unitsGo" type="button" data-i18n="unitsGo">Make my quick recap</button>
     </fieldset>
     <label class="drop" id="drop" for="file">
       <span class="pill" data-i18n="pill">Processed on your device · nothing is uploaded</span>
@@ -186,6 +217,10 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
       <li><span data-i18n="full2">Choose <b>Export Your Data</b>, then <b>Request Data Export</b>. Garmin emails you a download link, usually within 24–48 hours.</span></li>
       <li><span data-i18n="full3">Download the ZIP from that email (the link expires) and drop it above. No need to unzip it.</span></li>
     </ol>
+    <div class="remind">
+      <span data-i18n="remindText">Requested it? Get a reminder in 2 days:</span>
+      <div class="remind-btns"><a class="ghost" id="gcal" href="#" target="_blank" rel="noopener" data-i18n="remindGoogle">Google Calendar</a><button class="ghost" id="ical" type="button" data-i18n="remindApple">Apple Calendar</button></div>
+    </div>
   </section>
 
   <section class="steps">
@@ -203,7 +238,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
     <div><b data-i18n="f3t">Since your first day</b><span data-i18n="f3">New watch this year? Your recap starts the day you got it. Otherwise it covers the calendar year.</span></div>
   </section>
 
-  <p class="legal" data-i18n="legal">Works with Garmin Connect data exports. Not affiliated with or endorsed by Garmin. Insights are for fun and motivation, not medical advice. <a href="privacy.html">Privacy</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Open source (MIT)</a></p>
+  <p class="legal" data-i18n="legal">Works with Garmin Connect data exports. Not affiliated with or endorsed by Garmin. Insights are for fun and motivation, not medical advice. <a href="privacy.html">Privacy</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Open source (MIT)</a> · <a href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Feedback &amp; bugs</a></p>
 </main>
 
 <section class="story" id="story" hidden aria-roledescription="story" aria-label="Your recap">

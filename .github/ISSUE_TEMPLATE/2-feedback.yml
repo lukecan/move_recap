@@ -1,0 +1,30 @@
+name: "💬 Feedback"
+description: Tell us what you liked, what confused you, or what you'd change.
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: "Short and honest is perfect. *Türkçe yazabilirsin.* Please don't paste personal data; this page is public."
+  - type: dropdown
+    id: overall
+    attributes:
+      label: How was your recap overall?
+      options: ["😍 Loved it", "🙂 Good", "😐 Okay", "🙁 Not for me"]
+    validations:
+      required: true
+  - type: textarea
+    id: best
+    attributes:
+      label: Which card was your favourite, and why?
+  - type: textarea
+    id: change
+    attributes:
+      label: What would you change or add?
+    validations:
+      required: true
+  - type: dropdown
+    id: share
+    attributes:
+      label: Would you share your recap?
+      options: ["Yes, already did", "Yes, if I could download images", "Maybe", "No"]
