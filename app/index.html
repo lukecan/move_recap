@@ -147,7 +147,7 @@ button { font: inherit; }
 .grid2 span { font-size: 13px; color: var(--dim); }
 .rows { display: flex; flex-direction: column; gap: 10px; }
 .row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline; }
-.row .l { font-weight: 600; text-transform: capitalize; } .row .v { font-family: var(--f-data); font-size: 12.5px; color: var(--dim); }
+.row .l { font-weight: 600; } .row .v { font-family: var(--f-data); font-size: 12.5px; color: var(--dim); }
 .row .t { grid-column: 1 / -1; height: 10px; border-radius: 5px; background: rgba(255,255,255,.14); overflow: hidden; }
 .row .t i { display: block; height: 100%; background: var(--ink); border-radius: 5px; }
 .ba { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: baseline; padding: 11px 0; border-top: 1px solid rgba(29,21,40,.2); }
@@ -267,7 +267,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
   <section class="steps">
     <h2 data-i18n="quickTitle">In a hurry? Quick recap from your activities list</h2>
     <ol>
-      <li><span data-i18n="quick1">On a computer, open <code>connect.garmin.com</code> and go to <b>Activities → All Activities</b>.</span></li>
+      <li><span data-i18n="quick1">In your browser, open <code>connect.garmin.com</code> and go to <b>Activities → All Activities</b>.</span></li>
       <li><span data-i18n="quick2"><b>Scroll to the very bottom</b> and keep going until no more activities load. Garmin only exports the rows on screen, which is 20 until you scroll.</span></li>
       <li><span data-i18n="quick3">Click <b>Export CSV</b> at the top right and drop the file above. You'll get the activity cards right away; sleep, stress and heart cards need the full export.</span></li>
     </ol>
@@ -275,7 +275,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 
   <section class="facts-l">
     <div><b data-i18n="f1t">Your data stays with you</b><span data-i18n="f1">The ZIP is read inside this page. No server, no account, no cookies.</span></div>
-    <div><b data-i18n="f2t">Only what's needed</b><span data-i18n="f2">We read activity summaries, daily stats, sleep and fitness age. Raw GPS files are skipped.</span></div>
+    <div><b data-i18n="f2t">Only what's needed</b><span data-i18n="f2">It reads only activity summaries, daily stats, sleep and fitness age.</span></div>
     <div><b data-i18n="f3t">Since your first day</b><span data-i18n="f3">New watch this year? Your recap starts the day you got it. Otherwise it covers the calendar year.</span></div>
   </section>
 
@@ -285,14 +285,14 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 <section class="story" id="story" lang="en" hidden aria-roledescription="story" aria-label="Your recap">
   <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="sheet-box">
-      <div class="sheet-head"><h3 id="sheetTitle">Share</h3><button id="sheetClose" type="button" aria-label="Close">✕</button></div>
+      <div class="sheet-head"><h3 id="sheetTitle" data-s="share">Share</h3><button id="sheetClose" type="button" aria-label="Close">✕</button></div>
       <div class="sheet-preview" id="sheetPreview"><img id="sheetImg" alt="Preview of the image you'll share"></div>
       <div class="gallery" id="sheetGallery" hidden tabindex="0" role="group" aria-label="All cards in this theme"></div>
-      <div class="opt"><span>What</span><div class="chips" data-opt="scope"><button type="button" data-v="card">This card</button><button type="button" data-v="all">All cards</button></div></div>
-      <div class="opt" id="optPersonal" hidden><span>Records &amp; places</span><div class="chips" data-opt="personal"><button type="button" data-v="out">Keep private</button><button type="button" data-v="in">Include</button></div></div>
-      <div class="opt"><span>Theme</span><div class="chips" data-opt="theme"><button type="button" data-v="antalya">Antalya</button><button type="button" data-v="bib">Race Bib</button><button type="button" data-v="topo">Topo</button></div></div>
-      <div class="opt"><span>Size</span><div class="chips" data-opt="format"><button type="button" data-v="story">Story 9:16<small>Instagram · WhatsApp</small></button><button type="button" data-v="post">Post 4:5<small>Strava · LinkedIn · feed</small></button></div></div>
-      <div class="sheet-actions"><button class="primary" id="sheetShare" type="button">Share</button><button class="ghost" id="sheetSave" type="button">Download</button><button class="ghost" id="sheetCaption" type="button">Copy caption</button></div>
+      <div class="opt"><span data-s="what">What</span><div class="chips" data-opt="scope"><button type="button" data-v="card" data-s="card">This card</button><button type="button" data-v="all" data-s="all">All cards</button></div></div>
+      <div class="opt" id="optPersonal" hidden><span data-s="personal">Records &amp; places</span><div class="chips" data-opt="personal"><button type="button" data-v="out" data-s="out">Keep private</button><button type="button" data-v="in" data-s="in">Include</button></div></div>
+      <div class="opt"><span data-s="theme">Theme</span><div class="chips" data-opt="theme"><button type="button" data-v="antalya">Antalya</button><button type="button" data-v="bib">Race Bib</button><button type="button" data-v="topo">Topo</button></div></div>
+      <div class="opt"><span data-s="size">Size</span><div class="chips" data-opt="format"><button type="button" data-v="story" data-s="story">Story 9:16<small>Instagram · WhatsApp</small></button><button type="button" data-v="post" data-s="post">Post 4:5<small>Strava · LinkedIn · feed</small></button></div></div>
+      <div class="sheet-actions"><button class="primary" id="sheetShare" type="button">Share</button><button class="ghost" id="sheetSave" type="button" data-s="save">Download</button><button class="ghost" id="sheetCaption" type="button" data-s="caption">Copy caption</button></div>
       <p class="sheet-note" id="sheetNote" role="status"></p>
     </div>
   </div>
@@ -302,8 +302,8 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
     <button class="nav prev" id="prev" type="button" aria-label="Previous card"></button>
     <button class="nav next" id="next" type="button" aria-label="Next card"></button>
     <div id="cards"></div>
-    <button class="share-card" id="shareCard" type="button">Share ↗</button>
-    <div class="example" id="exampleTag" hidden>Example data</div>
+    <button class="share-card" id="shareCard" type="button" data-s="shareCard">Share ↗</button>
+    <div class="example" id="exampleTag" hidden data-s="example">Example data</div>
   </div>
 </section>
 

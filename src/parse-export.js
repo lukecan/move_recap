@@ -155,7 +155,7 @@
     if (warm.length >= 10) {
       const hot = warm.reduce((m, a) => (a.maxTemperature > m.maxTemperature ? a : m));
       const cold = warm.reduce((m, a) => (a.minTemperature < m.minTemperature ? a : m));
-      const pick = (a, t) => ({ c: t, date: prettyDate(a._l.date), sport: family(a.activityType) });
+      const pick = (a, t) => ({ c: t, date: a._l.date, sport: family(a.activityType) });
       weather = { workouts: warm.length, hot: pick(hot, hot.maxTemperature), cold: pick(cold, cold.minTemperature) };
     }
 
@@ -322,7 +322,7 @@
       byHour, byWeekday,
       zoneHours: zoneMs.map(ms => ms / 3.6e6),
       stressByWeekday, days: stressDays,
-      steps: { total: totalSteps, days: U.length, distanceKm, bestDay: best ? { date: prettyDate(best.calendarDate), steps: best.totalSteps } : null },
+      steps: { total: totalSteps, days: U.length, distanceKm, bestDay: best ? { date: best.calendarDate, steps: best.totalSteps } : null },
       sleep, body,
       sweatLiters: sweatMl / 1000,
       climbMeters: climb,
