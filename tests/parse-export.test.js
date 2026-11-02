@@ -98,3 +98,35 @@ test("steps distance uses Garmin's measured daily distance", () => {
   assert.match(I.steps(s).body, /about 320 km/);
   assert.ok(I.steps(s).trace.some(x => /measured/.test(x)));
 });
+
+test("extras: swim strokes, strength sets, mind minutes, weather, places, shoes, records, calories in kcal", () => {
+  const f = fixture();
+  const [path0, blocks] = [...f.entries()][0];
+  const acts = blocks[0].summarizedActivitiesExport;
+  acts.forEach((a, i) => { a.calories = 4184; if (a.activityType === "lap_swimming") a.strokes = 600; });
+  const lift = n => ({ activityId: 900 + n, activityType: "strength_training", startTimeLocal: at(isoAdd("2026-04-20", n), 12), duration: 1.8e6,
+    summarizedExerciseSets: [{ category: "SQUAT", subCategory: "GOBLET_SQUAT", sets: 4, reps: 40 }, { category: "PLANK", subCategory: "PLANK", sets: 2, reps: 0 }, { category: "WARM_UP", subCategory: "ARM_CIRCLES", sets: 9, reps: 9 }] });
+  const calm = n => ({ activityId: 950 + n, activityType: n % 2 ? "yoga" : "breathwork", startTimeLocal: at(isoAdd("2026-04-20", n), 22), duration: 1.2e6, avgRespirationRate: n % 2 ? 13 : 6.4, differenceStress: -5 });
+  for (let n = 0; n < 5; n++) acts.push(lift(n));
+  for (let n = 0; n < 4; n++) acts.push(calm(n));
+  acts.forEach((a, i) => { if (a.activityType === "running") { a.minTemperature = 5 + (i % 7); a.maxTemperature = 20 + (i % 9); a.locationName = i % 3 ? "Muratpasa" : i % 5 ? "Muratpaşa" : "Lisbon"; } });
+  acts.find(a => a.activityType === "lap_swimming").maxTemperature = 40;   // water, must be ignored
+  f.set("DI_CONNECT/DI-Connect-Fitness/x_gear.json", [{ gearDTOS: [{ gearPk: 7, gearTypeName: "Shoes", gearStatusName: "active", customMakeModel: "Test Shoe", maximumMeters: 500000 }],
+    gearActivityDTOs: { 7: acts.filter(a => a.activityType === "running").map(a => ({ activityId: a.activityId })) } }]);
+  f.set("DI_CONNECT/DI-Connect-Fitness/x_personalRecord.json", [{ personalRecords: [
+    { personalRecordType: "Best 5km Run", value: 1700, prStartTimeGMT: "Sat May 02 07:00:00 GMT 2026", current: true },
+    { personalRecordType: "Best 100m Pool Swim", value: 30.8, prStartTimeGMT: "Sat May 02 07:00:00 GMT 2026", current: true },   // faster than the world record
+    { personalRecordType: "Farthest Run", value: 21000, prStartTimeGMT: "Sat Jan 03 07:00:00 GMT 2026", current: true },        // before the period
+    { personalRecordType: "Longest Goal Streak", value: 8, prStartTimeGMT: "Sat May 02 07:00:00 GMT 2026", current: true },
+  ] }]);
+  const s = PE.computeStats(f);
+  assert.equal(Math.round(s.totals.calories), 1000 * acts.filter(a => a.calories).length);   // 4,184 kJ = 1,000 kcal each
+  assert.equal(s.swim.strokes, 20 * 600); assert.equal(s.swim.swims, 20);
+  assert.equal(s.strength.sets, 30); assert.equal(s.strength.reps, 200); assert.equal(s.strength.favourite, "GOBLET_SQUAT");
+  assert.deepEqual(Object.keys(s.strength.areas).sort(), ["core", "legs & glutes"]);
+  assert.equal(s.mind.sessions, 4); assert.equal(s.mind.minutes, 80); assert.equal(s.mind.slowestBreath, 6.4); assert.equal(s.mind.stressChange, -5);
+  assert.ok(s.weather.hot.c < 40, "swim water temperature is ignored");
+  assert.equal(s.places.list[0].name, "Muratpaşa");
+  assert.equal(s.shoes.list[0].name, "Test Shoe"); assert.equal(s.shoes.list[0].km, 100);
+  assert.deepEqual(s.records.map(r => r.type), ["Best 5km Run"]);
+});

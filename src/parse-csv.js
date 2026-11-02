@@ -71,11 +71,12 @@
     const col = name => head.indexOf(name);
     const C = { type: col("Activity Type"), date: col("Date"), dist: col("Distance"), time: col("Time"), ascent: col("Total Ascent"), cal: col("Calories"),
       // columns only appear when some activity has them; cadence is steps/min for runs, rpm for rides
-      spm: col("Avg Run Cadence"), rpm: col("Avg Bike Cadence"), avgW: col("Avg Power"), np: col("Normalized Power® (NP®)"), maxW: col("Max Power") };
+      spm: col("Avg Run Cadence"), strokes: col("Total Strokes"), rpm: col("Avg Bike Cadence"), avgW: col("Avg Power"), np: col("Normalized Power® (NP®)"), maxW: col("Max Power") };
     const opt = (r, i) => (i >= 0 ? number(r[i]) : null);
     const rows = body.map(r => ({
       type: r[C.type] || "", date: (r[C.date] || "").trim(), dist: number(r[C.dist]), secs: seconds(r[C.time]),
       ascent: C.ascent >= 0 ? number(r[C.ascent]) : null,
+      cal: opt(r, C.cal), strokes: opt(r, C.strokes),
       spm: opt(r, C.spm), rpm: opt(r, C.rpm), avgW: opt(r, C.avgW), np: opt(r, C.np), maxW: opt(r, C.maxW),
     })).filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.date));
     if (!rows.length) throw new Error("No activities found in this CSV.");
@@ -102,19 +103,25 @@
     for (let i = 1; i < active.length; i++) { run = dayDiff(active[i - 1], active[i]) === 1 ? run + 1 : 1; streak = Math.max(streak, run); }
     const start = dates[0], end = dates.at(-1);
     const truncated = rows.length <= GARMIN_PAGE;
+    const swimRows = rows.filter(r => family(r.type.toLowerCase()) === "swimming");
+    const stroked = swimRows.filter(r => r.strokes > 0);
+    const swimKm = r => r.dist == null ? 0 : r.dist > 50 ? r.dist * (imp ? YD : 1) / 1000 : r.dist * (imp ? MI : 1);
+    const swim = stroked.length >= 3 ? { swims: stroked.length, strokes: stroked.reduce((s, r) => s + r.strokes, 0),
+      km: swimRows.reduce((s, r) => s + swimKm(r), 0), openKm: swimRows.filter(r => /open water/i.test(r.type)).reduce((s, r) => s + swimKm(r), 0) } : null;
     const { cadence, power } = motion([...rows].sort((a, b) => (a.date < b.date ? -1 : 1)).map(r => ({ ...r, fam: family(r.type.toLowerCase()) })));
 
     return {
       source: "csv", truncated, units,
       period: { mode: "quick", label: "Quick Recap", range: `${pretty(start)} → ${pretty(end)}, ${end.slice(0, 4)}`, year: +end.slice(0, 4), start, end, days: dayDiff(start, end) + 1 },
       name: null,
-      totals: { activities: rows.length, activeDays: active.length, longestStreak: streak, hours: moveS / 3600, families: fam },
+      totals: { activities: rows.length, activeDays: active.length, longestStreak: streak, hours: moveS / 3600, families: fam,
+        calories: rows.reduce((s, r) => s + (r.cal || 0), 0) },
       byHour, byWeekday,
       zoneHours: [0, 0, 0, 0, 0],
       stressByWeekday: {}, days: 0,
       steps: null, sleep: { nights: 0 }, body: { days: 0 }, sweatLiters: 0,
       climbMeters: climb, climbSource: "workouts",
-      cadence, power,
+      cadence, power, swim,
     };
   }
 

@@ -48,7 +48,7 @@ test("a CSV of 20 rows or fewer is flagged as probably cut off", () => {
 test("the quick deck only shows activity cards and words climbing as workouts", () => {
   const d = I.deck(PC.computeStatsFromCsv(csv()));
   assert.deepEqual(d.shown.map(c => c.id).sort(), ["climb", "when"]);
-  assert.match(d.shown.find(c => c.id === "climb").headline, /on your workouts/);
+  assert.match(d.shown.find(c => c.id === "climb").body, /on your workouts/);
 });
 
 test("other CSVs are rejected with a clear message", () => {
@@ -67,8 +67,8 @@ test("imperial CSVs convert miles, swim yards and feet", () => {
 test("cards speak the user's units; data stays metric inside", () => {
   const m = PC.computeStatsFromCsv(csv(), { units: "metric" });
   const i = PC.computeStatsFromCsv(csv(), { units: "imperial" });
-  assert.match(I.climb(m).headline, /metres/);
-  assert.match(I.climb({ ...i, climbMeters: 1000 }).headline, /3,281 feet/);
+  assert.match(I.climb(m).body, /metres/);
+  assert.match(I.climb({ ...i, climbMeters: 1000 }).body, /3,281 feet/);
   assert.match(I.sweat({ sweatLiters: 56.8, units: "imperial" }).headline, /15 gallons/);
   assert.equal(I.distance(1523, "imperial"), "946 mi");
 });

@@ -2,14 +2,14 @@
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = n => Math.round(n).toLocaleString("en-US");
-const TITLES = { when: "When you move", zones: "Heart-rate DNA", stress: "Your stress week", cadence: "Your rhythm", power: "Power", steps: "Steps", sleep: "Sleep", body: "Your body", sweat: "Sweat", climb: "Climbing" };
+const TITLES = { when: "When you move", zones: "Heart-rate DNA", stress: "Your stress week", cadence: "Your rhythm", power: "Power", swim: "Swimming", strength: "Strength", mind: "Mind & body", shoes: "Your shoes", weather: "Weather", records: "Records", places: "Places", steps: "Steps", sleep: "Sleep", body: "Your body", sweat: "Sweat", climb: "Climbing" };
 const FOOT = '<div class="foot">From your Garmin Connect data</div>';
 
 /* ---------- example (invented) ---------- */
 const EXAMPLE = {
   period: { mode: "year", label: "2026 Recap", range: "Jan 1 → Nov 2, 2026", days: 306 },
   name: "Alex", example: true,
-  totals: { activities: 110, activeDays: 90, longestStreak: 6, hours: 158, families: { "walking & hiking": { count: 58, km: 690, hours: 110 }, cycling: { count: 14, km: 420, hours: 16 }, running: { count: 21, km: 140, hours: 15 }, strength: { count: 17, km: 0, hours: 17 } } },
+  totals: { activities: 110, activeDays: 90, longestStreak: 6, hours: 158, families: { "walking & hiking": { count: 58, km: 690, hours: 110 }, cycling: { count: 14, km: 420, hours: 16 }, running: { count: 21, km: 140, hours: 15 }, strength: { count: 17, km: 0, hours: 17 } }, calories: 98000 },
   byHour: { 8: 9, 9: 14, 10: 12, 11: 6, 14: 4, 17: 3, 19: 4 },
   byWeekday: { Mon: 3, Tue: 4, Wed: 2, Thu: 5, Fri: 3, Sat: 18, Sun: 17 },
   zoneHours: [14, 18, 22, 6, 1],
@@ -20,6 +20,13 @@ const EXAMPLE = {
   sweatLiters: 140, climbMeters: 14000,
   cadence: { runs: 21, spm: 164, first: 160, last: 167 },
   power: { sport: "cycling", sessions: 14, kJ: 9800, avgW: 172, bestNP: 214, maxW: 612, rpm: 86 },
+  swim: { swims: 22, strokes: 31800, km: 38, openKm: 9 },
+  strength: { sessions: 17, sets: 240, reps: 2600, favourite: "GOBLET_SQUAT", favouriteSets: 38, areas: { "legs & glutes": 96, core: 60, back: 44, "full body": 40 } },
+  mind: { sessions: 12, minutes: 260, kinds: { yoga: 8, meditation: 4 }, slowestBreath: 8.2, stressChange: -6 },
+  shoes: { list: [{ name: "Trail runners", km: 610, maxKm: 700 }] },
+  weather: { workouts: 80, hot: { c: 34, date: "Jul 21", sport: "running" }, cold: { c: -3, date: "Jan 12", sport: "walking & hiking" } },
+  records: [{ type: "Best 5km Run", value: 1642, date: "2026-09-20", current: true }, { type: "Farthest Run", value: 21300, date: "2026-10-04", current: true }, { type: "Most Steps in a Day", value: 41000, date: "2026-09-14", current: true }],
+  places: { list: [{ name: "Lisbon", count: 61 }, { name: "Sintra", count: 9 }, { name: "Porto", count: 4 }, { name: "Madrid", count: 2 }] },
 };
 
 /* ---------- language (landing page only; cards stay English for now) ---------- */
@@ -194,6 +201,11 @@ $("#ical").addEventListener("click", () => {
 setCalendarLink();
 
 /* ---------- card visuals ---------- */
+function vizLadder({ label, rungs }) {
+  const items = [...rungs].reverse(), k = items.findIndex(r => r.done);
+  items.splice(k < 0 ? items.length : k, 0, { you: true, name: "You", label });
+  return `<div class="ladder" role="list">${items.map(r => `<div role="listitem" class="rung ${r.you ? "you" : r.done ? "done" : "next"}"><span>${esc(r.name)}</span><span>${esc(r.label)}</span></div>`).join("")}</div>`;
+}
 function vizWhen(byHour) {
   const cx = 150, cy = 140, r0 = 50, rmax = 112, max = Math.max(...Object.values(byHour)); let s = "";
   for (let h = 0; h < 24; h++) {
@@ -226,11 +238,16 @@ function totalsCard(s) {
   return ["c-totals", `<div class="eyebrow">In total</div><div class="hero"><b>${num(t.activities)}</b><span>activities</span></div>
     <div class="grid2"><div><b>${num(t.activeDays)}</b><span>active days</span></div><div><b>${num(t.longestStreak)}</b><span>days in a row, your longest streak</span></div><div><b>${num(t.hours)} h</b><span>spent moving</span></div><div><b>${Object.keys(t.families).length}</b><span>${Object.keys(t.families).length === 1 ? "kind of sport" : "kinds of sport"}</span></div></div>
     <div class="rows">${fams.map(([f, v]) => `<div class="row"><span class="l">${esc(f)}</span><span class="v">${v.count}×${v.km >= 1 ? ` · ${dist(v.km, s.units)}` : ` · ${num(v.hours)} h`}</span><div class="t"><i style="width:${v.hours / maxH * 100}%"></i></div></div>`).join("")}</div>
+    ${kcalLine(t) ? `<p class="kcal">${esc(kcalLine(t))}</p>` : ""}
     <div class="foot">From your Garmin Connect data</div>`];
 }
+// a slice of cheese pizza is about 285 kcal
+const kcalLine = t => (t.calories >= 1000 ? `${num(t.calories)} kcal burned, about ${num(t.calories / 285)} slices of pizza.` : "");
 function insightCard(c, s) {
   const viz = c.id === "when" ? vizWhen(s.byHour) : c.id === "zones" ? vizZones(c.shares) : c.id === "stress" ? vizStress(c.byDay)
     : c.beforeAfter ? `<div>${c.beforeAfter.map(r => `<div class="ba"><span class="k">${esc(r.label)}</span><span class="from">${esc(r.from)}</span><span>→</span><span class="to">${esc(r.to)}${r.unit ? ` <small>${esc(r.unit)}</small>` : ""}</span></div>`).join("")}</div>`
+    : c.ladder ? vizLadder(c.ladder)
+    : c.rows ? `<div class="rows">${c.rows.map(([l, v, f]) => `<div class="row"><span class="l">${esc(l)}</span><span class="v">${esc(v)}</span><div class="t"><i style="width:${Math.max(4, f * 100)}%"></i></div></div>`).join("")}</div>`
     : c.tiles ? `<div class="grid2">${c.tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>`
     : c.hero ? `<div class="hero"><b>${esc(c.hero[0])}</b><span>${esc(c.hero[1])}</span></div>` : "";
   return [`c-${c.id}`, `<div class="eyebrow">${TITLES[c.id]}</div><span class="persona">${esc(c.persona)}</span><h2>${esc(c.headline)}</h2>${viz}<p>${esc(c.body)}</p>${FOOT}`];
@@ -248,7 +265,7 @@ function summaryText(s, shown) {
     fams.filter(([, v]) => v.km >= 1).slice(0, 2).map(([f, v]) => `${dist(v.km, s.units)} ${f}`).join(" · "),
     personas.length ? `My types: ${personas.join(" · ")}` : ""].filter(Boolean).join("\n");
 }
-function endCard(s, shown) {
+function endCard(s, shown, extraCount = 0) {
   const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].km - a[1].km);
   const tiles = [[num(t.activities), "activities"], [num(t.activeDays), "active days"],
     ...fams.filter(([, v]) => v.km >= 1).slice(0, 2).map(([f, v]) => [dist(v.km, s.units), f]),
@@ -256,28 +273,30 @@ function endCard(s, shown) {
   return ["c-end", `<span class="persona">${esc(s.period.label)}</span><h2>${s.name ? esc(s.name) + "'s" : "Your"} recap</h2>
     <div class="summary">${tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
     <button class="share" id="shareAll" type="button">Share my recap ↗</button>
+    ${extraCount ? `<button class="more-cards" id="moreCards" type="button">${extraCount} more ${extraCount === 1 ? "card" : "cards"} →</button>` : ""}
     <a class="fb" href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Tell us what you think →</a>
     <div class="foot">Your data never left this page</div>`];
 }
 
 /* ---------- share specs: what each card says, in a form Share.render can draw ---------- */
 const plain = html => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; };
-function shareSpecs(s, shown) {
+function shareSpecs(s, shown, extra = []) {
   const base = { period: s.period.label, year: s.period.year || String(s.period.end || "").slice(0, 4) };
   const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].hours - a[1].hours).slice(0, 4), maxH = fams[0]?.[1].hours || 1;
   const intro = { ...base, id: "intro", eyebrow: s.period.range,
     headline: s.source === "csv" ? `Your quick recap: ${num(t.activities)} activities.` : plain(introCard(s)[1].match(/<h1>(.*?)<\/h1>/)[1]),
     body: "Your runs, your rest days, your nights and everything in between." };
-  const totals = { ...base, id: "totals", eyebrow: "In total", big: [num(t.activities), `activities · ${num(t.activeDays)} active days`],
+  const totals = { ...base, id: "totals", eyebrow: "In total", big: [num(t.activities), `activities · ${num(t.activeDays)} active days`], body: kcalLine(t) || undefined,
     viz: { type: "rows", rows: fams.map(([f, v]) => [f, `${v.count}×${v.km >= 1 ? " · " + dist(v.km, s.units) : " · " + num(v.hours) + " h"}`, v.hours / maxH]) } };
-  const insight = c => ({ ...base, id: c.id, eyebrow: TITLES[c.id], chip: c.persona, headline: c.headline, body: c.body,
+  const insight = c => ({ ...base, id: c.id, private: !!c.private, eyebrow: TITLES[c.id], chip: c.persona, headline: c.headline, body: c.body,
     big: c.beforeAfter ? null : c.hero || null,
     viz: c.id === "when" ? { type: "clock", byHour: s.byHour } : c.id === "zones" ? { type: "zones", shares: c.shares }
       : c.id === "stress" ? { type: "bars", rows: c.byDay } : c.beforeAfter ? { type: "ba", rows: c.beforeAfter }
+      : c.ladder ? { type: "ladder", ...c.ladder } : c.rows ? { type: "rows", rows: c.rows }
       : c.tiles ? { type: "tiles", tiles: c.tiles } : null });
   const end = { ...base, id: "end", eyebrow: s.period.label, headline: `${s.name ? s.name + "'s" : "My"} ${s.period.mode === "year" ? s.period.label : "recap"}`,
     viz: { type: "tiles", tiles: plainTiles(s, shown) } };
-  return [intro, totals, ...shown.map(insight), ...(s.source === "csv" ? [null] : []), end];
+  return [intro, totals, ...shown.map(insight), ...(s.source === "csv" ? [null] : []), end, ...extra.map(insight)];
 }
 function plainTiles(s, shown) {
   const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].km - a[1].km);
@@ -287,18 +306,23 @@ function plainTiles(s, shown) {
 }
 
 /* ---------- story player ---------- */
-let cards = [], bars = [], idx = 0, t0 = 0, elapsed = 0, paused = false, raf = 0, summary = "", specs = [], current = null;
+let cards = [], bars = [], idx = 0, t0 = 0, elapsed = 0, paused = false, raf = 0, summary = "", specs = [], current = null, endIdx = 0;
+const MAX_CARDS = 12;   // intro, totals, the summary (and the quick-recap note) count towards it
 const DUR = 15000, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function openStory(s) {
-  const d = Insights.deck(s);
-  const list = [introCard(s), totalsCard(s), ...d.shown.map(c => insightCard(c, s)), ...(s.source === "csv" ? [moreCard(s)] : []), endCard(s, d.shown)];
-  summary = summaryText(s, d.shown); specs = shareSpecs(s, d.shown); current = s;
+  const d = Insights.deck(s), csv = s.source === "csv";
+  // the best-scoring cards play in the story; the rest wait behind "N more cards" on the summary
+  const room = MAX_CARDS - 3 - (csv ? 1 : 0), main = d.shown.slice(0, room), extra = d.shown.slice(room);
+  const list = [introCard(s), totalsCard(s), ...main.map(c => insightCard(c, s)), ...(csv ? [moreCard(s)] : []), endCard(s, main, extra.length), ...extra.map(c => insightCard(c, s))];
+  endIdx = list.length - 1 - extra.length;
+  summary = summaryText(s, main); specs = shareSpecs(s, main, extra); current = s;
   $("#cards").innerHTML = list.map(([cls, html], i) => `<section class="card ${cls}" aria-label="Card ${i + 1} of ${list.length}" ${i ? "hidden" : ""}>${html}</section>`).join("");
-  $("#bars").innerHTML = list.map(() => "<span><i></i></span>").join("");
+  $("#bars").innerHTML = list.slice(0, endIdx + 1).map(() => "<span><i></i></span>").join("");
   cards = [...$("#cards").children]; bars = [...$("#bars").children];
   $("#topLabel").textContent = s.period.label; $("#exampleTag").hidden = !s.example;
   $("#story").hidden = false; document.body.style.overflow = "hidden";
   $("#shareAll").addEventListener("click", () => openSheet("all"));
+  $("#moreCards")?.addEventListener("click", () => { togglePause(false); show(endIdx + 1); });
   paused = reduce; setPause(); show(0);
   cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
   $("#next").focus();
@@ -307,23 +331,25 @@ function closeStory() { $("#story").hidden = true; document.body.style.overflow 
 function show(n) {
   idx = Math.max(0, Math.min(cards.length - 1, n)); elapsed = 0; t0 = performance.now();
   cards.forEach((c, i) => (c.hidden = i !== idx));
-  $("#stage").classList.toggle("light", ["c-body", "c-totals", "c-sweat", "c-power"].some(c => cards[idx].classList.contains(c)));
+  $("#stage").classList.toggle("light", ["c-body", "c-totals", "c-sweat", "c-power", "c-records"].some(c => cards[idx].classList.contains(c)));
   $("#shareCard").hidden = !specs[idx] || cards[idx].classList.contains("c-end");
   bars.forEach((b, i) => { b.className = i < idx ? "done" : ""; b.firstChild.style.width = ""; });
+  $("#bars").classList.toggle("bonus", idx > endIdx);
   cards[idx].querySelectorAll(":scope > *").forEach(el => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });
 }
 function tick(now) {
   if (!paused) {
     const p = (elapsed + now - t0) / DUR;
-    bars[idx].firstChild.style.width = Math.min(p, 1) * 100 + "%";
-    if (p >= 1) { if (idx < cards.length - 1) show(idx + 1); else { paused = true; setPause(); } }
+    if (bars[idx]) bars[idx].firstChild.style.width = Math.min(p, 1) * 100 + "%";
+    // the story stops on the summary; bonus cards play on only once opened
+    if (p >= 1) { if (idx !== endIdx && idx < cards.length - 1) show(idx + 1); else { paused = true; setPause(); } }
   }
   raf = requestAnimationFrame(tick);
 }
 function setPause() { const b = $("#pause"); b.textContent = paused ? "▶" : "❚❚"; b.setAttribute("aria-label", paused ? "Play" : "Pause"); }
 function togglePause(force) { const want = force ?? !paused; if (want === paused) return; if (want) elapsed += performance.now() - t0; else t0 = performance.now(); paused = want; setPause(); }
 /* ---------- share sheet ---------- */
-const sheetState = { scope: "card", theme: (() => { try { return localStorage.getItem("wr-theme") || "antalya"; } catch { return "antalya"; } })(), format: "story" };
+const sheetState = { personal: "out", scope: "card", theme: (() => { try { return localStorage.getItem("wr-theme") || "antalya"; } catch { return "antalya"; } })(), format: "story" };
 let prepared = { key: "", files: [] }, previewUrl = "", galleryUrls = [], wasPaused = false, lastFocus = null, prepToken = 0;
 function clearGallery() { galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = []; $("#sheetGallery").replaceChildren(); }
 const caption = () => `${summary}\n\nMade free at recap.mertcangenc.com #WellbeingRecap`;
@@ -335,10 +361,12 @@ function syncChips() {
   $("#sheetSave").hidden = !canShareFiles;
 }
 async function prepare() {
-  const token = ++prepToken, key = `${sheetState.scope}|${sheetState.theme}|${sheetState.format}|${idx}`;
+  const token = ++prepToken, key = `${sheetState.scope}|${sheetState.theme}|${sheetState.format}|${sheetState.personal}|${idx}`;
+  $("#optPersonal").hidden = sheetState.scope !== "all" || !specs.some(sp => sp && sp.private);
   $("#sheetShare").disabled = true; $("#sheetNote").textContent = "Preparing your image…"; syncChips();
   const all = sheetState.scope === "all";
-  const list = all ? specs.map((sp, i) => [sp, i]).filter(([sp]) => sp) : [[specs[idx], idx]];
+  // records and places stay out of "All cards" unless the viewer opts in; sharing that one card is a choice too
+  const list = all ? specs.map((sp, i) => [sp, i]).filter(([sp]) => sp && (!sp.private || sheetState.personal === "in")) : [[specs[idx], idx]];
   // "All cards" shows every image side by side, so a theme can be judged across the whole recap
   $("#sheetPreview").hidden = all; $("#sheetGallery").hidden = !all;
   if (all) { clearGallery(); $("#sheetGallery").scrollLeft = 0; }

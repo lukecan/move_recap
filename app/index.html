@@ -191,11 +191,23 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 
 .c-intro { background: radial-gradient(120% 70% at 80% 100%, var(--orange) 0%, transparent 60%), var(--sea); }
 /* Orange cards use dark ink: white on #ee6420 is ~3.1:1, dark ink is ~5.5:1 */
-.c-totals, .c-sweat, .c-power { background: var(--orange); color: var(--ink-dark); --dim: var(--ink-dark); }
+.c-totals, .c-sweat, .c-power, .c-records { background: var(--orange); color: var(--ink-dark); --dim: var(--ink-dark); }
+.c-records .grid2 b, .c-power .grid2 b { color: var(--ink-dark); }
 .c-totals .row .t { background: rgba(29,21,40,.15); } .c-totals .row .t i { background: var(--ink-dark); }
 .c-when { background: var(--sea); } .c-zones { background: var(--lagoon); } .c-stress { background: var(--pome); }
 .c-steps { background: var(--lagoon); } .c-sleep { background: var(--panel); }
-.c-climb { background: var(--sea); } .c-cadence { background: var(--pome); } .c-body { background: var(--sand); color: var(--ink-dark); }
+.c-climb { background: var(--sea); } .c-cadence { background: var(--pome); }
+.c-swim { background: var(--lagoon); } .c-strength { background: var(--pome); } .c-mind { background: var(--panel); }
+.c-shoes { background: var(--sea); } .c-weather { background: var(--pome); } .c-places { background: var(--panel); }
+.kcal { font-family: var(--f-data); font-size: 13px; margin: 4px 0 0; }
+/* height ladder: next rung dashed, "you" as a pill, passed rungs solid */
+.ladder { display: flex; flex-direction: column; gap: 4px; }
+.rung { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 2px; border-bottom: 2px solid currentColor; font-weight: 600; }
+.rung span:last-child { font-family: var(--f-data); font-weight: 400; font-size: 13px; }
+.rung.next { border-bottom-style: dashed; opacity: .85; }
+.rung.you { background: var(--orange); color: var(--ink-dark); border: 0; border-radius: 999px; padding: 8px 16px; font-weight: 700; }
+.more-cards { position: relative; z-index: 4; align-self: flex-start; background: none; border: 2px solid currentColor; color: inherit; border-radius: 999px; padding: 10px 18px; font: 600 15px var(--f-body); cursor: pointer; }
+.bars.bonus { opacity: .35; } .c-body { background: var(--sand); color: var(--ink-dark); }
 .c-body { --dim: rgba(29,21,40,.78); }
 .c-more { background: var(--pome); }
 .c-end { background: linear-gradient(160deg, var(--sea) 0%, var(--lagoon) 55%, var(--orange) 130%); }
@@ -274,6 +286,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
       <div class="sheet-preview" id="sheetPreview"><img id="sheetImg" alt="Preview of the image you'll share"></div>
       <div class="gallery" id="sheetGallery" hidden tabindex="0" role="group" aria-label="All cards in this theme"></div>
       <div class="opt"><span>What</span><div class="chips" data-opt="scope"><button type="button" data-v="card">This card</button><button type="button" data-v="all">All cards</button></div></div>
+      <div class="opt" id="optPersonal" hidden><span>Records &amp; places</span><div class="chips" data-opt="personal"><button type="button" data-v="out">Keep private</button><button type="button" data-v="in">Include</button></div></div>
       <div class="opt"><span>Theme</span><div class="chips" data-opt="theme"><button type="button" data-v="antalya">Antalya</button><button type="button" data-v="bib">Race Bib</button><button type="button" data-v="topo">Topo</button></div></div>
       <div class="opt"><span>Size</span><div class="chips" data-opt="format"><button type="button" data-v="story">Story 9:16<small>Instagram · WhatsApp</small></button><button type="button" data-v="post">Post 4:5<small>Strava · LinkedIn · feed</small></button></div></div>
       <div class="sheet-actions"><button class="primary" id="sheetShare" type="button">Share</button><button class="ghost" id="sheetSave" type="button">Download</button><button class="ghost" id="sheetCaption" type="button">Copy caption</button></div>
