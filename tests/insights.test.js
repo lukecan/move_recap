@@ -96,8 +96,8 @@ test("brand-new watch only gets the cards it has data for", () => {
     assert2.equal(I2.cadence({ cadence: c, random: () => 0 }).song.title, I2.cadence({ cadence: c, random: () => 0 }).song.title);
     assert2.equal(I2.cadence({ cadence: { runs: 3, spm: 170, first: 170, last: 170 } }).skip, true);
   });
-  test2("every cadence from 140 to 190 has three songs within 12 BPM", () => {
-    for (let spm = 140; spm <= 190; spm++) for (const s of I2.songsFor(spm)) assert2.ok(Math.abs(s.bpm - spm) <= 12, `${spm} → ${s.title} ${s.bpm}`);
+  test2("every cadence from 140 to 200 has three songs at exactly that BPM", () => {
+    for (let spm = 140; spm <= 200; spm++) for (const s of I2.songsFor(spm)) assert2.equal(s.bpm, spm, `${spm} → ${s.title} ${s.bpm}`);
   });
   test2("power card: bike work, ladders and personas", () => {
     const ride = I2.power({ power: { sport: "cycling", sessions: 40, kJ: 72000, avgW: 230, bestNP: 280, maxW: 900, rpm: 88 }, units: "metric" });
