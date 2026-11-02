@@ -55,7 +55,7 @@ node --test tests/*.test.js
 
 ## Share images
 
-Every card has a **Share ↗** button, and the last card shares the whole recap. `src/share.js` draws the card on a `<canvas>` (DOM-to-image tricks break on Safari, where most Instagram stories are made), so it works offline and under the no-network CSP.
+Every card has a **Share ↗** button, and the last card shares the whole recap. Only the summary card carries the site address, as a "Want yours?" invitation; the other images stay clean. `src/share.js` draws the card on a `<canvas>` (DOM-to-image tricks break on Safari, where most Instagram stories are made), so it works offline and under the no-network CSP.
 
 | Option | Choices |
 |---|---|

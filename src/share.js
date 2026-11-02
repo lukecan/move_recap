@@ -12,6 +12,8 @@
  *         viz?: { type: "clock" | "zones" | "bars" | "ba" | "rows" | "tiles", ... },
  *         period, name? }
  *
+ * Only the summary ("end") card carries the "Want yours?" invitation with the site address.
+ *
  * Formats: "story" 1080×1920 keeps text out of Instagram's top and bottom UI;
  *          "post"  1080×1350 (4:5) fits Instagram feed, LinkedIn and Strava.
  */
@@ -235,7 +237,9 @@
 
     // Content between the header and the footer is laid out twice: once on a scratch canvas to
     // measure it, then for real, shifted so the block sits a little above the middle of the free space.
-    const footerTop = F.h - F.bottom - (theme === THEMES.bib ? 60 * s : 20 * s);
+    // only the last (summary) card carries the invitation, so it needs room above the footer
+    const cta = spec.id === "end";
+    const footerTop = F.h - F.bottom - (theme === THEMES.bib ? 60 * s : 20 * s) - (cta ? 190 * s : 0);
     const contentTop = y;
     let vizH = null;
     const drawContent = (ctx, y) => {
@@ -287,20 +291,29 @@
     const free = footerTop - contentTop - used;
     drawContent(ctx, contentTop + Math.max(0, free * .4));
 
-    // footer: brand + site (the share image is the ad)
-    const fy = F.h - F.bottom + 40 * s;
+    // invitation on the summary card only: "Want yours?" + where to get it
+    if (cta) {
+      const cy = F.h - F.bottom - (theme === THEMES.bib ? 70 : 30) * s;
+      ctx.strokeStyle = C.track; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X, cy - 150 * s); ctx.lineTo(F.w - X, cy - 150 * s); ctx.stroke();
+      ctx.fillStyle = C.ink; ctx.font = `${theme.weights.display} ${Math.round(66 * s)}px ${T.display}`;
+      ctx.fillText(theme.upper ? "WANT YOURS?" : "Want yours?", X, cy - 62 * s);
+      ctx.fillStyle = theme === THEMES.antalya ? C.ink : C.accent; ctx.font = mono(34);
+      ctx.fillText(`${SITE} · free`, X, cy);
+    }
+
+    // footer: the period only; the site address lives on the summary card's invitation
+    const fy = F.h - F.bottom + 40 * s, footLabel = cta ? "" : String(spec.period || "").toUpperCase();
     if (theme === THEMES.bib) {
       ctx.strokeStyle = "#cfcfc7"; ctx.lineWidth = 4; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(0, fy - 50 * s); ctx.lineTo(F.w, fy - 50 * s); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = C.dim; ctx.font = mono(28); ctx.fillText(SITE.toUpperCase(), X, fy + 10 * s);
+      ctx.fillStyle = C.dim; ctx.font = mono(28); ctx.fillText(footLabel, X, fy + 10 * s);
       let bx = F.w - X - 220; for (const bw of [6, 3, 9, 3, 3, 6, 12, 3, 6, 3, 9, 6, 3, 3, 9, 3, 6, 6, 3, 12]) { ctx.fillStyle = C.ink; ctx.fillRect(bx, fy - 26 * s, bw, 50 * s); bx += bw + 4; }
     } else if (theme === THEMES.topo) {
       ctx.fillStyle = C.ink; ctx.fillRect(X, fy - 20 * s, 90 * s, 12 * s); ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.strokeRect(X + 90 * s, fy - 20 * s, 90 * s, 12 * s);
-      ctx.font = mono(26); ctx.fillText(SITE.toUpperCase(), X, fy + 30 * s);
+      ctx.font = mono(26); ctx.fillText(footLabel, X, fy + 30 * s);
       ctx.textAlign = "center"; ctx.font = `700 ${Math.round(40 * s)}px ${T.display}`; ctx.fillText("▲", F.w - X - 20, fy - 10 * s); ctx.fillText("N", F.w - X - 20, fy + 34 * s); ctx.textAlign = "left";
     } else {
       ctx.fillStyle = C.dim; ctx.font = mono(28); spaced(ctx, 4);
-      ctx.fillText(SITE.toUpperCase(), X, fy); spaced(ctx, 0);
-      if (spec.period) { ctx.textAlign = "right"; ctx.fillText(String(spec.period).toUpperCase(), F.w - X, fy); ctx.textAlign = "left"; }
+      ctx.fillText(footLabel, X, fy); spaced(ctx, 0);
     }
     return canvas;
   }
