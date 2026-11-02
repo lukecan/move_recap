@@ -67,8 +67,12 @@ test("body card is hidden when nothing improved, and never shows a worse metric"
 });
 
 test("comparison ladders read naturally", () => {
-  assert.match(I.climb({ climbMeters: 5446 }).body, /62% of the way up Mount Everest/);
-  assert.match(I.climb({ climbMeters: 2100 }).body, /2\.5× the height of the Burj Khalifa/);
+  assert.match(I.climb({ climbMeters: 5446 }).headline, /higher than Mont Blanc/);
+  assert.match(I.climb({ climbMeters: 5446 }).body, /Next stop: Kilimanjaro, 449 m to go/);
+  assert.match(I.climb({ climbMeters: 2100 }).headline, /higher than the Burj Khalifa/);
+  assert.match(I.climb({ climbMeters: 30000 }).body, /edge of space, 30% of the way there/);
+  assert.match(I.climb({ climbMeters: 120000 }).body, /past the edge of space/);
+  assert.match(I.climb({ climbMeters: 60 }).reason, /100 m/);
   assert.match(I.steps({ steps: { total: 1508000, days: 290, bestDay: { date: "x", steps: 1 } } }).body, /94% of the length of Italy/);
   assert.match(I.sweat({ sweatLiters: 56.8 }).body, /About 3 office water-cooler jugs/);
   assert.match(I.sweat({ sweatLiters: 310 }).body, /2\.1 bathtubs/);
@@ -77,7 +81,7 @@ test("comparison ladders read naturally", () => {
 test("brand-new watch only gets the cards it has data for", () => {
   const d = I.deck(P.newbie);
   assert.deepEqual(d.shown.map(c => c.id), ["steps"]);
-  assert.equal(d.skipped.length, 9);   // incl. cadence + power
+  assert.equal(d.skipped.length, 16);   // every other card waits for its data
 });
 
 /* ---- cadence + power ---- */
@@ -121,5 +125,24 @@ test("brand-new watch only gets the cards it has data for", () => {
     assert2.equal(m.power.sport, "cycling"); assert2.equal(m.power.kJ, 2160); assert2.equal(m.power.rpm, 90);
     assert2.equal(motion(runs).power.sport, "running");
     assert2.equal(motion(runs.slice(0, 4)).cadence, null);
+  });
+}
+
+{
+  const I3 = require("../src/insights.js"), t3 = require("node:test"), a3 = require("node:assert");
+  t3("new cards read naturally and stay private where they should", () => {
+    a3.match(I3.swim({ swim: { swims: 10, strokes: 20000, km: 40, openKm: 30 } }).body, /1\.2× a swim across the English Channel/);
+    a3.equal(I3.swim({ swim: { swims: 10, strokes: 20000, km: 40, openKm: 30 } }).persona, "open-water swimmer");
+    a3.match(I3.swim({ swim: { swims: 4, strokes: 3000, km: 1.2, openKm: 0 } }).body, /50% of the swim from Alcatraz/);
+    a3.match(I3.strength({ strength: { sessions: 6, sets: 60, reps: 600, favourite: "DUMBBELL_BULGARIAN_SPLIT_SQUAT", favouriteSets: 20, areas: { "legs & glutes": 40, core: 20 } } }).headline, /dumbbell Bulgarian split squat/);
+    const m = I3.mind({ mind: { sessions: 5, minutes: 120, kinds: { breathwork: 4, yoga: 1 }, slowestBreath: 5.8, stressChange: -4 } });
+    a3.match(m.headline, /6 breaths a minute/); a3.match(m.body, /dropped 4 points/); a3.equal(m.persona, "breath master");
+    a3.match(I3.shoes({ shoes: { list: [{ name: "Pegasus", km: 600, maxKm: 650 }] } }).body, /Time to start looking/);
+    a3.match(I3.shoes({ shoes: { list: [{ name: "Pegasus", km: 300, maxKm: null }] } }).body, /Set a target distance/);
+    a3.match(I3.weather({ weather: { workouts: 30, hot: { c: 35, date: "Jul 2", sport: "running" }, cold: { c: -4, date: "Jan 9", sport: "cycling" } }, units: "imperial" }).headline, /95 °F/);
+    a3.equal(I3.weather({ weather: { workouts: 30, hot: { c: 24, date: "Jul 2", sport: "running" }, cold: { c: 20, date: "Jan 9", sport: "cycling" } } }).skip, true);
+    const r = I3.records({ records: [{ type: "Best 5km Run", value: 1642, date: "2026-09-20" }, { type: "Farthest Run", value: 21300, date: "2026-10-04" }] });
+    a3.equal(r.private, true); a3.deepEqual(r.tiles, [["27:22", "5km run"], ["21 km", "farthest run"]]); a3.match(r.body, /Oct 4/);
+    a3.equal(I3.places({ places: { list: [{ name: "Lisbon", count: 9 }, { name: "Porto", count: 1 }] } }).private, true);
   });
 }

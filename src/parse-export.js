@@ -18,6 +18,8 @@
     sleep: /sleepData\.json$/,
     fitnessAge: /fitnessAgeData\.json$/,
     profile: /^user_profile\.json$/,
+    gear: /gear\.json$/,
+    records: /personalRecord\.json$/,
   };
   const base = p => p.split("/").pop();
   const isWanted = path => Object.values(PATTERNS).some(re => re.test(base(path)));
@@ -91,9 +93,112 @@
     return { cadence, power };
   }
 
+  // Garmin strength categories → the body area they mostly train
+  const AREA = [
+    ["legs & glutes", /SQUAT|LUNGE|DEADLIFT|LEG_CURL|CALF|HIP_RAISE|HIP_STABILITY|PLYO|STEP_UP|GLUTE/],
+    ["core", /CORE|CRUNCH|PLANK|SIT_UP|LEG_RAISE|HIP_SWING/],
+    ["chest", /BENCH|CHEST|PUSH_UP|FLYE?\b/],
+    ["back", /ROW|PULL_UP|LAT_|HYPEREXTENSION|PULLDOWN/],
+    ["shoulders", /SHOULDER|LATERAL_RAISE|SHRUG|OVERHEAD/],
+    ["arms", /CURL|TRICEP/],
+    ["full body", /TOTAL_BODY|OLYMPIC|CARRY|CARDIO|MOVE|SLED|BATTLE_ROPE|BANDED|SUSPENSION|FLYE/],
+  ];
+  const areaOf = cat => (AREA.find(([, re]) => re.test(cat || "")) || ["full body"])[0];
+  const SKIP_SETS = /WARM_UP|STRETCH|UNKNOWN|REST/;
+  const fold = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ı/g, "i").toLowerCase().trim();
+  const MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  // "Wed May 20 15:00:00 GMT 2026" → "2026-05-20"
+  const prDate = s => { const m = /^\w{3} (\w{3}) (\d{1,2}) .* (\d{4})$/.exec(s || ""); return m ? `${m[3]}-${String(MON[m[1]] + 1).padStart(2, "0")}-${m[2].padStart(2, "0")}` : null; };
+
+  // Swimming strokes, strength sets, mind & body minutes, temperatures, places, shoes, records.
+  function details(A, all, { gear, recs, inPeriod }) {
+    const swims = A.filter(a => family(a.activityType) === "swimming");
+    const stroked = swims.filter(a => a.strokes > 0);
+    const swim = stroked.length >= 3 ? {
+      swims: stroked.length, strokes: stroked.reduce((s, a) => s + a.strokes, 0),
+      km: swims.reduce((s, a) => s + (a.distance || 0), 0) / 1e5,
+      openKm: swims.filter(a => /open_water/.test(a.activityType)).reduce((s, a) => s + (a.distance || 0), 0) / 1e5,
+    } : null;
+
+    const lifts = A.filter(a => /strength/.test(a.activityType) && arr(a.summarizedExerciseSets).length);
+    let strength = null;
+    if (lifts.length >= 5) {
+      const moves = {}, areas = {};
+      let sets = 0, reps = 0;
+      for (const a of lifts) for (const e of arr(a.summarizedExerciseSets)) {
+        if (SKIP_SETS.test(e.category) || !e.sets) continue;
+        sets += e.sets; reps += e.reps || 0;
+        const name = e.subCategory || e.category;
+        moves[name] = (moves[name] || 0) + e.sets;
+        const ar = areaOf(e.category); areas[ar] = (areas[ar] || 0) + e.sets;
+      }
+      const fav = Object.entries(moves).sort((x, y) => y[1] - x[1])[0];
+      if (sets >= 20) strength = { sessions: lifts.length, sets, reps, favourite: fav ? fav[0] : null, favouriteSets: fav ? fav[1] : 0, areas };
+    }
+
+    const calm = A.filter(a => /yoga|breathwork|meditation|pilates/.test(a.activityType));
+    const minutes = calm.reduce((s, a) => s + (a.duration || 0), 0) / 6e4;
+    const drops = calm.filter(a => Number.isFinite(a.differenceStress)).map(a => a.differenceStress);
+    const breaths = calm.filter(a => a.avgRespirationRate > 0).map(a => a.avgRespirationRate);
+    const kinds = {};
+    for (const a of calm) { const k = /yoga|pilates/.test(a.activityType) ? "yoga" : /breath/.test(a.activityType) ? "breathwork" : "meditation"; kinds[k] = (kinds[k] || 0) + 1; }
+    const mind = calm.length >= 3 && minutes >= 30 ? {
+      sessions: calm.length, minutes, kinds,
+      slowestBreath: breaths.length ? Math.min(...breaths) : null,
+      stressChange: drops.length >= 3 ? mean(drops) : null,
+    } : null;
+
+    // swims log water temperature, not air: leave them out
+    const warm = A.filter(a => Number.isFinite(a.maxTemperature) && Number.isFinite(a.minTemperature) && family(a.activityType) !== "swimming");
+    let weather = null;
+    if (warm.length >= 10) {
+      const hot = warm.reduce((m, a) => (a.maxTemperature > m.maxTemperature ? a : m));
+      const cold = warm.reduce((m, a) => (a.minTemperature < m.minTemperature ? a : m));
+      const pick = (a, t) => ({ c: t, date: prettyDate(a._l.date), sport: family(a.activityType) });
+      weather = { workouts: warm.length, hot: pick(hot, hot.maxTemperature), cold: pick(cold, cold.minTemperature) };
+    }
+
+    // places: Garmin's location names, grouped across spellings (Muratpasa / Muratpaşa)
+    const groups = new Map();
+    for (const a of A) if (a.locationName) {
+      const k = fold(a.locationName), g = groups.get(k) || { count: 0, names: {} };
+      g.count++; g.names[a.locationName] = (g.names[a.locationName] || 0) + 1; groups.set(k, g);
+    }
+    // show the spelling with local letters (Muratpaşa over Muratpasa), else the most common one
+    const accented = n => /[^\x00-\x7f]/.test(n);
+    const placeList = [...groups.values()].map(g => ({ name: Object.entries(g.names).sort((x, y) => accented(y[0]) - accented(x[0]) || y[1] - x[1])[0][0], count: g.count })).sort((x, y) => y.count - x.count);
+    const places = placeList.length >= 2 ? { list: placeList } : null;
+
+    // shoes: distance of every activity logged with them, all time (shoe life isn't yearly)
+    let shoes = null;
+    if (gear) {
+      const byId = new Map(all.map(a => [String(a.activityId), a]));
+      const list = arr(gear.gearDTOS).filter(g => /shoe/i.test(g.gearTypeName || "") && g.gearStatusName !== "retired").map(g => {
+        const ids = arr((gear.gearActivityDTOs || {})[String(g.gearPk)]).map(x => String(x.activityId));
+        return { name: g.displayName || g.customMakeModel || "Your shoes", km: ids.reduce((s, id) => s + ((byId.get(id) || {}).distance || 0), 0) / 1e5, maxKm: g.maximumMeters ? g.maximumMeters / 1000 : null };
+      }).filter(x => x.km >= 50).sort((x, y) => y.km - x.km);
+      if (list.length) shoes = { list };
+    }
+
+    // "Best …" times faster than the world record are watch glitches (a miscounted pool length, a GPS jump): drop them.
+  const PR_DIST = { "100m": 100, "400m": 400, "750m": 750, "1000m": 1000, "1500m": 1500, "1km": 1000, "1mile": 1609.344, "5km": 5000, "10km": 10000, "Half Marathon": 21097.5, "Marathon": 42195, "40km": 40000 };
+  const WR_SEC_PER_M = { Swim: 0.46, Run: 0.13, Cycle: 0.04, Ride: 0.04 };
+  const plausible = (type, value) => {
+    const m = /^Best (.+?) (Pool Swim|Run|Ride|Cycle)$/.exec(type);
+    if (!m || !PR_DIST[m[1]]) return true;
+    return value >= PR_DIST[m[1]] * WR_SEC_PER_M[m[2] === "Pool Swim" ? "Swim" : m[2]];
+  };
+  // personal records set during the period that still stand
+    const seen = new Set();
+    const records = recs.map(r => ({ type: r.personalRecordType, value: r.value, date: prDate(r.prStartTimeGMT), current: r.current }))
+      .filter(r => r.current && r.type && r.date && inPeriod(r.date) && r.value > 0 && !/Goal Streak/.test(r.type) && plausible(r.type, r.value))
+      .filter(r => !seen.has(r.type) && seen.add(r.type));
+    return { swim, strength, mind, weather, places, shoes, records: records.length ? records : null };
+  }
+
   function computeStats(files) {
     const acts = new Map(), uds = new Map(), nights = new Map(), fa = [];
-    let profile = null;
+    let profile = null, gear = null, recs = [];
     for (const [path, data] of files) {
       const b = base(path);
       if (PATTERNS.activities.test(b)) {
@@ -108,6 +213,10 @@
         fa.push(...arr(data));
       } else if (PATTERNS.profile.test(b)) {
         profile = data;
+      } else if (PATTERNS.gear.test(b)) {
+        gear = arr(data)[0] || null;
+      } else if (PATTERNS.records.test(b)) {
+        for (const blk of arr(data)) recs.push(...arr(blk.personalRecords));
       }
     }
     const allActs = [...acts.values()].filter(a => a.startTimeLocal).map(a => ({ ...a, _l: local(a.startTimeLocal) }));
@@ -183,6 +292,8 @@
       avgW: a.avgPower, np: a.normPower, maxW: a.maxPower, rpm: a.avgBikeCadence,
     })));
 
+    const extras = details(A, allActs, { gear, recs, inPeriod: P.inPeriod });
+
     const firstName = profile?.firstName || null;
     return {
       period: { mode: P.mode, label: P.label, range: P.range, year: P.year, start: P.start, end: P.end, days: P.days },
@@ -190,6 +301,7 @@
       totals: {
         activities: A.length, activeDays: activeDays.length, longestStreak: streak,
         hours: moveMs / 3.6e6, families: fam,
+        calories: A.reduce((s, a) => s + (a.calories || 0), 0) / 4.184,   // the export stores kilojoules
       },
       // ---- insight engine inputs ----
       byHour, byWeekday,
@@ -200,6 +312,7 @@
       sweatLiters: sweatMl / 1000,
       climbMeters: climb,
       cadence, power,
+      ...extras,
     };
   }
 

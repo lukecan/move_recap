@@ -329,30 +329,162 @@
   }
 
   /* --------------------------------------------------------------- CLIMB */
-  const HEIGHTS = [
-    { upTo: 1000,     size: 330,  name: "Eiffel Tower",  say: r => `That's ${of(r, "the height of the Eiffel Tower")}.` },
-    { upTo: 4425,     size: 828,  name: "Burj Khalifa",  say: r => `That's ${of(r, "the height of the Burj Khalifa")}.` },
-    { upTo: 8849,     size: 8849, name: "Mount Everest", say: r => `That's ${Math.round(r * 100)}% of the way up Mount Everest.` },
-    { upTo: Infinity, size: 8849, name: "Mount Everest", say: r => `That's ${of(r, "the height of Mount Everest")}.` },
+  // A ladder of famous heights; the card shows the last rung passed and the next one up.
+  const LADDER = [
+    { name: "the Statue of Liberty", short: "Statue of Liberty", h: 93 },
+    { name: "the Eiffel Tower", short: "Eiffel Tower", h: 330 },
+    { name: "the Empire State Building", short: "Empire State", h: 443 },
+    { name: "the Burj Khalifa", short: "Burj Khalifa", h: 828 },
+    { name: "Mont Blanc", short: "Mont Blanc", h: 4807 },          // French survey, Oct 2026
+    { name: "Kilimanjaro", short: "Kilimanjaro", h: 5895 },
+    { name: "Aconcagua", short: "Aconcagua", h: 6961 },
+    { name: "Mount Everest", short: "Everest", h: 8849 },
+    { name: "a plane's cruising altitude", short: "Cruising altitude", h: 11000 },
+    { name: "the edge of space", short: "Edge of space", h: 100000 },  // Kármán line
   ];
   // climbMeters: total floors climbed, in metres (Garmin's floorsAscendedInMeters)
   // climbSource "workouts" (CSV quick path) means elevation gained during activities, not floors
   function climb({ climbMeters: m, climbSource, units }) {
     const trace = [];
-    if (!m || m < 100) return { id: "climb", skip: true, reason: "Less than 100 m of floors climbed." };
-    const r = rung(HEIGHTS, m);
-    trace.push(`${num(m)} m → ${r.name} (${(m / r.size).toFixed(2)}×)`);
-    const score = clamp01(0.4 + Math.log10(m) / 10);
-    trace.push(`rule: fun-fact card, score grows with log(metres) → ${score.toFixed(2)}`);
-    if (climbSource === "workouts") {
-      return { id: "climb", skip: false, score, persona: "fun fact", headline: `You climbed ${heightLong(m, units)} on your workouts.`,
-        body: r.say(m / r.size), hero: [heightShort(m, units), "elevation gained"],
-        facts: [["climbed", heightShort(m, units)], ["≈", r.name], ["source", "workouts"]], trace };
-    }
-    return { id: "climb", skip: false, score, persona: "fun fact", headline: `You climbed ${heightLong(m, units)} of stairs and slopes.`,
-      body: `${r.say(m / r.size)} About ${num(m / 3)} floors, one flight at a time.`,
-      hero: [heightShort(m, units), "climbed"],
-      facts: [["climbed", heightShort(m, units)], ["floors", num(m / 3)], ["≈", r.name]], trace };
+    if (!m || m < 100) return { id: "climb", skip: true, reason: "Less than 100 m climbed." };
+    const passed = LADDER.filter(r => r.h <= m), last = passed.at(-1), next = LADDER[passed.length] || null;
+    trace.push(`${num(m)} m → passed ${last ? last.short : "nothing yet"}, next ${next ? next.short : "none"}`);
+    const score = clamp01(0.45 + Math.log10(m) / 10);
+    trace.push(`rule: ladder card, score grows with log(metres) → ${score.toFixed(2)}`);
+    const what = climbSource === "workouts" ? "on your workouts" : "of stairs and slopes";
+    const headline = last ? `You climbed higher than ${last.name}.` : `You climbed ${heightLong(m, units)} ${what}.`;
+    let body = last ? `${heightLong(m, units)} ${what}. ` : "";
+    if (next && next.h === 100000) body += `Next stop: the edge of space, ${Math.round(m / 1000)}% of the way there.`;
+    else if (next) body += `Next stop: ${next.name}, ${heightShort(next.h - m, units)} to go.`;
+    else body += `That's past the edge of space. Truly out of this world.`;
+    // rungs to draw: up to two below, the one passed, and the next
+    const i = passed.length;
+    const rungs = LADDER.slice(Math.max(0, i - 3), Math.min(LADDER.length, i + 1)).map(r => ({ name: r.short, h: r.h, label: heightShort(r.h, units), done: r.h <= m }));
+    return { id: "climb", skip: false, score, persona: m >= 8849 ? "summit chaser" : m >= 4807 ? "mountaineer" : m >= 828 ? "skyscraper climber" : "step by step", headline, body: body.trim(),
+      ladder: { value: m, label: heightShort(m, units), rungs },
+      facts: [["climbed", heightShort(m, units)], ["passed", last ? last.short : "—"], ["next", next ? next.short : "—"]], trace };
+  }
+
+  /* --------------------------------------------------------------- SWIM */
+  const SWIMS = [
+    { upTo: 10,       size: 2.4,  name: "Alcatraz → San Francisco", say: r => `That's ${of(r, "the swim from Alcatraz to San Francisco")}.` },
+    { upTo: 25,       size: 16,   name: "Strait of Gibraltar",      say: r => `That's ${of(r, "a swim across the Strait of Gibraltar")}.` },
+    { upTo: Infinity, size: 33.8, name: "English Channel",          say: r => `That's ${of(r, "a swim across the English Channel")}.` },
+  ];
+  // swim: { swims, strokes, km, openKm }
+  function swim({ swim: w, units }) {
+    if (!w || w.strokes < 1000) return { id: "swim", skip: true, reason: "Fewer than 1,000 strokes recorded." };
+    const r = rung(SWIMS, w.km), open = w.openKm / (w.km || 1);
+    const persona = open >= 0.5 ? "open-water swimmer" : open >= 0.2 ? "pool-and-sea swimmer" : "lane regular";
+    return { id: "swim", skip: false, score: clamp01(0.5 + Math.log10(w.strokes) / 20), persona,
+      headline: `Your arms pulled ${num(w.strokes)} strokes through the water.`,
+      body: `${distance(w.km, units)} over ${w.swims} swims. ${r.say(w.km / r.size)}`,
+      hero: [num(w.strokes), "strokes"],
+      facts: [["strokes", num(w.strokes)], ["distance", distance(w.km, units)], ["≈", r.name]],
+      trace: [`${w.strokes} strokes, ${w.km.toFixed(1)} km (${Math.round(open * 100)}% open water) → ${r.name}; ${persona}`] };
+  }
+
+  /* ------------------------------------------------------------ STRENGTH */
+  const moveName = s => { const t = String(s || "").toLowerCase().replace(/_/g, " ").replace(/\btrx\b/, "TRX").replace(/\bbulgarian\b/, "Bulgarian").replace(/\brussian\b/, "Russian").replace(/\bromanian\b/, "Romanian"); return t.charAt(0).toUpperCase() + t.slice(1); };
+  // strength: { sessions, sets, reps, favourite, favouriteSets, areas: { area → sets } }
+  function strength({ strength: g }) {
+    if (!g) return { id: "strength", skip: true, reason: "Fewer than 5 strength sessions with logged sets." };
+    const areas = Object.entries(g.areas).sort((a, b) => b[1] - a[1]);
+    const [top, topSets] = areas[0], share = topSets / g.sets;
+    const upper = ["chest", "back", "shoulders", "arms"].reduce((s, k) => s + (g.areas[k] || 0), 0) / g.sets;
+    const persona = upper >= 0.5 ? "upper-body builder" : top === "legs & glutes" && share >= 0.35 ? "leg-day loyalist" : top === "core" && share >= 0.35 ? "core crusher" : "all-round lifter";
+    return { id: "strength", skip: false, score: 0.55, persona,
+      headline: g.favourite ? `Your go-to move: ${moveName(g.favourite).replace(/^./, c => c.toLowerCase())}.` : `${num(g.sets)} sets, one rep at a time.`,
+      body: `${num(g.sets)} sets and ${num(g.reps)} reps over ${g.sessions} sessions. Most of the work went to your ${top}.`,
+      rows: areas.slice(0, 4).map(([a, n]) => [a, `${n} sets`, n / topSets]),
+      facts: [["sets", num(g.sets)], ["reps", num(g.reps)], ["favourite", moveName(g.favourite)]],
+      trace: [`${g.sessions} sessions, ${g.sets} sets; top area ${top} ${Math.round(share * 100)}%, upper body ${Math.round(upper * 100)}% → ${persona}`] };
+  }
+
+  /* ---------------------------------------------------------------- MIND */
+  // mind: { sessions, minutes, kinds: { yoga, breathwork, meditation }, slowestBreath, stressChange }
+  function mind({ mind: m }) {
+    if (!m) return { id: "mind", skip: true, reason: "Fewer than 3 yoga, breathwork or meditation sessions (30 min)." };
+    const kinds = Object.entries(m.kinds).sort((a, b) => b[1] - a[1]);
+    const persona = { yoga: "yogi", breathwork: "breath master", meditation: "calm seeker" }[kinds[0][0]];
+    const slow = m.slowestBreath && m.slowestBreath <= 9 ? Math.round(m.slowestBreath) : null;
+    const headline = slow ? `You slowed your breathing to ${slow} breaths a minute.` : `${num(m.minutes)} minutes just for your mind.`;
+    let body = `${m.sessions} sessions of ${kinds.map(([k]) => k).join(", ").replace(/, ([^,]*)$/, " and $1")}, ${num(m.minutes)} minutes in all.`;
+    if (slow) body += ` A typical resting rate is 12 to 20.`;
+    if (m.stressChange != null && m.stressChange <= -2) body += ` On average your stress dropped ${Math.round(-m.stressChange)} points by the end of a session.`;
+    return { id: "mind", skip: false, score: slow ? 0.6 : 0.5, persona, headline, body,
+      hero: [num(m.minutes), "minutes of calm"],
+      facts: [["sessions", String(m.sessions)], ["minutes", num(m.minutes)], ["slowest breath", slow ? `${slow}/min` : "—"]],
+      trace: [`${m.sessions} sessions, ${Math.round(m.minutes)} min, slowest ${m.slowestBreath}, stress Δ ${m.stressChange}`] };
+  }
+
+  /* --------------------------------------------------------------- SHOES */
+  // shoes: { list: [{ name, km, maxKm }] } — active pairs, lifetime distance
+  function shoes({ shoes: sh, units }) {
+    if (!sh) return { id: "shoes", skip: true, reason: "No shoes with 50 km or more in Garmin Connect gear." };
+    const [a] = sh.list, pct = a.maxKm ? a.km / a.maxKm : null;
+    let body;
+    if (pct == null) body = `Garmin adds every activity you log in them. Set a target distance in Gear and we'll tell you when they're due.`;
+    else if (pct >= 0.85) body = `That's ${Math.round(pct * 100)}% of the ${distance(a.maxKm, units)} you set. Time to start looking for the next pair.`;
+    else body = `${distance(a.maxKm - a.km, units)} to go before the ${distance(a.maxKm, units)} you set.`;
+    return { id: "shoes", skip: false, score: 0.5, persona: pct != null && pct >= 0.85 ? "ready to retire" : "going strong",
+      headline: sh.list.length > 1 ? `Your shoes have ${distance(sh.list.reduce((s, x) => s + x.km, 0), units)} in them.` : `Your ${a.name} have ${distance(a.km, units)} in them.`,
+      body, rows: sh.list.slice(0, 4).map(x => [x.name, x.maxKm ? `${distance(x.km, units)} / ${distance(x.maxKm, units)}` : distance(x.km, units), x.maxKm ? Math.min(1, x.km / x.maxKm) : 1]),
+      facts: [["pair", a.name], ["distance", distance(a.km, units)], ["of limit", pct == null ? "—" : `${Math.round(pct * 100)}%`]],
+      trace: [`${sh.list.length} pairs; top ${a.name} ${Math.round(a.km)} km of ${a.maxKm || "no limit"}`] };
+  }
+
+  /* ------------------------------------------------------------- WEATHER */
+  const temp = (c, u) => (u === "imperial" ? `${Math.round(c * 9 / 5 + 32)} °F` : `${Math.round(c)} °C`);
+  // weather: { workouts, hot: { c, date, sport }, cold: { c, date, sport } }
+  function weather({ weather: w, units }) {
+    if (!w || w.hot.c - w.cold.c < 8) return { id: "weather", skip: true, reason: "Fewer than 10 workouts with temperature, or under 8 °C between them." };
+    const persona = w.hot.c >= 30 ? "heat seeker" : w.cold.c <= 0 ? "cold-proof" : "all-weather";
+    const headline = w.hot.c >= 30 ? `You trained through ${temp(w.hot.c, units)} heat.` : w.cold.c <= 0 ? `You trained at ${temp(w.cold.c, units)}.` : `From ${temp(w.cold.c, units)} to ${temp(w.hot.c, units)}, you kept going.`;
+    return { id: "weather", skip: false, score: 0.4 + Math.min(0.25, (w.hot.c - w.cold.c) / 120), persona, headline,
+      body: `Hottest: ${w.hot.sport}, ${w.hot.date}. Coldest: ${w.cold.sport}, ${w.cold.date}. Your watch measures this on your wrist, so it reads a little warm.`,
+      tiles: [[temp(w.hot.c, units), `hottest · ${w.hot.date}`], [temp(w.cold.c, units), `coldest · ${w.cold.date}`]],
+      facts: [["hottest", temp(w.hot.c, units)], ["coldest", temp(w.cold.c, units)], ["workouts", String(w.workouts)]],
+      trace: [`${w.workouts} workouts with temperature, ${w.cold.c}–${w.hot.c} °C → ${persona}`] };
+  }
+
+  /* ------------------------------------------------------------- RECORDS */
+  const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const clockTime = sec => { const s = Math.round(sec), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}` : `${m}:${String(x).padStart(2, "0")}`; };
+  function recordValue({ type, value }, units) {
+    if (/^Best /.test(type)) return clockTime(value);
+    if (/Pool Swim/.test(type)) return `${num(value)} m`;
+    if (/Farthest|Longest/.test(type)) return distance(value / 1000, units);
+    if (/Elevation/.test(type)) return heightShort(value, units);
+    if (/Steps/.test(type)) return `${num(value)} steps`;
+    return num(value);
+  }
+  const recordLabel = t => t.replace(/^Best (\S+) (Run|Pool Swim|Ride|Cycle)$/, (_, d, s) => `${d} ${s === "Pool Swim" ? "swim" : s === "Run" ? "run" : "ride"}`)
+    .replace(/^Most Steps in a /, "steps in a ").replace(/^Farthest /, "farthest ").replace(/^Longest /, "longest ").replace(/^Max /, "max ").toLowerCase();
+  // records: [{ type, value, date, current }] — set during the period, still standing. Private: left out of shares unless chosen.
+  function records({ records: rs, units }) {
+    if (!rs || !rs.length) return { id: "records", skip: true, reason: "No personal records set in this period." };
+    const order = t => (/^Best/.test(t) ? 0 : /Farthest|Longest/.test(t) ? 1 : 2);
+    const list = [...rs].sort((a, b) => order(a.type) - order(b.type));
+    return { id: "records", skip: false, private: true, score: clamp01(0.5 + rs.length / 40), persona: rs.length >= 5 ? "record breaker" : "new bests",
+      headline: rs.length === 1 ? "You set a new personal record." : `You set ${rs.length} personal records that still stand.`,
+      body: (n => `Your newest: ${recordLabel(n.type)}, on ${MONTH_SHORT[+n.date.slice(5, 7) - 1]} ${+n.date.slice(8, 10)}.`)([...rs].sort((a, b) => (a.date < b.date ? 1 : -1))[0]),
+      tiles: list.slice(0, 4).map(r => [recordValue(r, units), recordLabel(r.type)]),
+      facts: [["records", String(rs.length)]], trace: [rs.map(r => `${r.type}=${r.value}@${r.date}`).join(", ")] };
+  }
+
+  /* -------------------------------------------------------------- PLACES */
+  // places: { list: [{ name, count }] } — Garmin's start-location names. Private: left out of shares unless chosen.
+  function places({ places: pl }) {
+    if (!pl || pl.list.length < 2) return { id: "places", skip: true, reason: "Workouts started in fewer than 2 places." };
+    const total = pl.list.reduce((s, x) => s + x.count, 0), [top] = pl.list, share = top.count / total;
+    const others = pl.list.slice(1, 4).map(x => x.name);
+    return { id: "places", skip: false, private: true, score: 0.4 + Math.min(0.25, pl.list.length / 40),
+      persona: pl.list.length >= 5 ? "explorer" : share >= 0.8 ? "home turf" : "on the move",
+      headline: `You trained in ${pl.list.length} places.`,
+      body: `${Math.round(share * 100)}% of your located workouts started in ${top.name}, with stops in ${others.join(", ").replace(/, ([^,]*)$/, " and $1")}.`,
+      rows: pl.list.slice(0, 4).map(x => [x.name, `${x.count}×`, x.count / top.count]),
+      facts: [["places", String(pl.list.length)], ["home", top.name]], trace: [pl.list.map(x => `${x.name} ${x.count}`).join(", ")] };
   }
 
   /* ------------------------------------------------------------- CADENCE */
@@ -605,14 +737,14 @@
 
   /* --------------------------------------------------------------- DECK */
   function deck(stats) {
-    const cards = [when, zones, stressDay, cadence, power, steps, sleep, body, sweat, climb].map(f => f(stats));
+    const cards = [when, zones, stressDay, cadence, power, swim, strength, mind, steps, sleep, body, sweat, climb, shoes, weather, records, places].map(f => f(stats));
     return {
       shown: cards.filter(c => !c.skip).sort((a, b) => b.score - a.score),
       skipped: cards.filter(c => c.skip),
     };
   }
 
-  const api = { when, zones, stressDay, cadence, power, steps, sleep, body, sweat, climb, deck, DAYS, distance, heightShort, SONGS, songsFor };
+  const api = { when, zones, stressDay, cadence, power, swim, strength, mind, steps, sleep, body, sweat, climb, shoes, weather, records, places, deck, LADDER, DAYS, distance, heightShort, SONGS, songsFor };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Insights = api;
 })(typeof window !== "undefined" ? window : globalThis);

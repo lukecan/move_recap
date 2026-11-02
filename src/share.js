@@ -193,6 +193,26 @@
       });
       return viz.rows.length * rh;
     }
+    if (viz.type === "ladder") {
+      // top to bottom: the next rung (dashed), you, then the rungs you passed
+      const items = [...viz.rungs].reverse(), k = items.findIndex(r => r.done);
+      items.splice(k < 0 ? items.length : k, 0, { you: true, name: "You", label: viz.label });
+      const rh = Math.min(h / items.length, 96);
+      items.forEach((r, i) => {
+        const ry = y + i * rh;
+        if (r.you) {
+          ctx.fillStyle = C.peak; roundRect(ctx, x, ry + rh * .14, w, rh * .7, rh * .35); ctx.fill();
+          ctx.fillStyle = C.bg; ctx.font = `700 ${Math.round(rh * .32)}px ${T.body}`; ctx.fillText(theme.upper ? "YOU" : "You", x + rh * .35, ry + rh * .6);
+          ctx.font = mono(Math.round(rh * .27)); ctx.textAlign = "right"; ctx.fillText(r.label, x + w - rh * .35, ry + rh * .6); ctx.textAlign = "left";
+          return;
+        }
+        ctx.strokeStyle = r.done ? C.ink : C.dim; ctx.lineWidth = r.done ? 4 : 3; ctx.setLineDash(r.done ? [] : [12, 10]);
+        ctx.beginPath(); ctx.moveTo(x, ry + rh * .8); ctx.lineTo(x + w, ry + rh * .8); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = r.done ? C.ink : C.dim; ctx.font = `600 ${Math.round(rh * .3)}px ${T.body}`; ctx.fillText(r.name, x, ry + rh * .62);
+        ctx.font = mono(Math.round(rh * .24)); ctx.textAlign = "right"; ctx.fillText(r.label, x + w, ry + rh * .62); ctx.textAlign = "left";
+      });
+      return items.length * rh;
+    }
     if (viz.type === "tiles") {
       const cols = 2, rowsN = Math.ceil(viz.tiles.length / cols), th = Math.min(h / rowsN, 190), tw = w / cols;
       viz.tiles.forEach(([v, k], i) => {
