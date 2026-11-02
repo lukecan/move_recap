@@ -1,0 +1,11 @@
+# Raw Garmin exports contain personal data (email, contacts, profile photo). Never commit them.
+*.zip
+DI_CONNECT/
+garmin_export*/
+export*/
+*.fit
+recap.json
+__pycache__/
+.DS_Store
+node_modules/
+dist/

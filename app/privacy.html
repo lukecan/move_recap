@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · Wellbeing Recap</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root {
+  color-scheme: dark;
+  --night: #14112a; --panel: #1e1a3a; --orange: #ee6420; --ink: #fff8ee; --dim: rgba(255,248,238,.66); --line: rgba(255,248,238,.16);
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+body { margin: 0; background: var(--night); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+main { max-width: 680px; margin: 0 auto; padding: 40px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 22px; }
+a { color: var(--ink); }
+.brand { font-family: var(--f-data); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); text-decoration: none; }
+h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(30px, 6vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-size: 19px; margin: 12px 0 0; }
+p, ul { margin: 0; color: var(--dim); }
+p strong, li strong { color: var(--ink); }
+code { font-family: var(--f-data); font-size: .88em; background: rgba(255,248,238,.08); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.tldr { background: var(--panel); border-radius: 16px; padding: 18px 20px; color: var(--ink); }
+[hidden] { display: none !important; }
+main > div[data-block] { display: flex; flex-direction: column; gap: 22px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lang { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.lang button { background: none; border: 0; color: var(--dim); font-family: var(--f-data); font-size: 12px; letter-spacing: .08em; padding: 6px 12px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--night); }
+.foot { font-family: var(--f-data); font-size: 12px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar"><a class="brand" href="./">← Wellbeing Recap</a><div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div></div>
+  <div data-block="en">
+  <h1>Privacy</h1>
+  <p class="tldr"><strong>Short version:</strong> your file is read inside your browser and never sent anywhere. There's no account, no server that sees your data, no cookies and no analytics.</p>
+
+  <h2>What happens to your file</h2>
+  <p>When you drop in your Garmin export ZIP or Activities CSV, this page opens it on your own device. It reads only what the recap needs: activity summaries, daily stats, sleep and fitness age. Raw GPS files inside the ZIP are skipped. The numbers stay in your browser's memory and are gone when you close or reload the tab.</p>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li><strong>No uploads.</strong> There is no server that receives your data.</li>
+    <li><strong>No tracking.</strong> No analytics, no cookies, no third-party scripts. Fonts and code are served from this site.</li>
+    <li><strong>No account.</strong> There's nothing to sign up for.</li>
+  </ul>
+
+  <h2>Check it yourself</h2>
+  <p>You don't have to take our word for it. This page tells your browser that it may not connect anywhere at all (a <code>Content-Security-Policy</code> with <code>connect-src 'none'</code>). Open your browser's developer tools, go to the Network tab, drop in your file, and you'll see that nothing leaves the page.</p>
+
+  <h2>What your browser keeps</h2>
+  <p>Only your units (metric or imperial) and language choices, saved in your browser's local storage so you don't have to pick it again. You can clear it with your browser's site data settings.</p>
+
+  <h2>Hosting</h2>
+  <p>The site is hosted on GitHub Pages. Like any web host, GitHub may log basic request data (such as IP addresses) to run and secure the service. That never includes your file. See GitHub's privacy statement for details.</p>
+
+  <h2>Not medical advice</h2>
+  <p>Insights are for fun and motivation. They aren't medical advice. Not affiliated with or endorsed by Garmin.</p>
+
+  <h2>Questions</h2>
+  <p>Email <strong>selam@mertcangenc.com</strong>. The code is open: <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">github.com/lukecan/wellbeing_recap</a>.</p>
+
+  </div>
+  <div data-block="tr" hidden>
+  <h1>Gizlilik</h1>
+  <p class="tldr"><strong>Kısaca:</strong> dosyan tarayıcının içinde okunur ve hiçbir yere gönderilmez. Hesap yok, verini gören bir sunucu yok, çerez yok, analiz aracı yok.</p>
+
+  <h2>Dosyana ne oluyor?</h2>
+  <p>Garmin export ZIP'ini ya da aktivite CSV'ni bıraktığında bu sayfa onu kendi cihazında açar. Sadece özetin ihtiyaç duyduğu kısımları okur: aktivite özetleri, günlük istatistikler, uyku ve fitness yaşı. ZIP'in içindeki ham GPS dosyalarına dokunmaz. Rakamlar tarayıcının belleğinde durur ve sekmeyi kapattığında ya da sayfayı yenilediğinde silinir.</p>
+
+  <h2>Neleri yapmıyoruz?</h2>
+  <ul>
+    <li><strong>Yükleme yok.</strong> Verini alan bir sunucu yok.</li>
+    <li><strong>Takip yok.</strong> Analiz aracı, çerez ya da üçüncü taraf kodu yok. Fontlar ve kodlar bu siteden sunulur.</li>
+    <li><strong>Hesap yok.</strong> Kayıt olunacak bir şey yok.</li>
+  </ul>
+
+  <h2>Kendin kontrol et</h2>
+  <p>Bizim sözümüze güvenmek zorunda değilsin. Bu sayfa tarayıcına hiçbir yere bağlanamayacağını söylüyor (<code>connect-src 'none'</code> içeren bir <code>Content-Security-Policy</code>). Tarayıcının geliştirici araçlarını aç, Network sekmesine geç, dosyanı bırak: sayfadan dışarı hiçbir şey çıkmadığını göreceksin.</p>
+
+  <h2>Tarayıcının sakladıkları</h2>
+  <p>Sadece birim (metrik ya da emperyal) ve dil tercihin. Bir dahaki gelişinde yeniden seçmemen için tarayıcının yerel depolamasında tutulur. Tarayıcının site verisi ayarlarından silebilirsin.</p>
+
+  <h2>Barındırma</h2>
+  <p>Site GitHub Pages üzerinde çalışıyor. Her web sunucusu gibi GitHub da hizmeti işletmek ve güvenliğini sağlamak için IP adresi gibi temel istek bilgilerini kaydedebilir. Bu kayıtlar dosyanı asla içermez. Ayrıntılar için GitHub'ın gizlilik bildirimine bakabilirsin.</p>
+
+  <h2>Tıbbi tavsiye değildir</h2>
+  <p>Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye yerine geçmez. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez.</p>
+
+  <h2>Sorular</h2>
+  <p><strong>selam@mertcangenc.com</strong> adresine yazabilirsin. Kodlar açık: <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">github.com/lukecan/wellbeing_recap</a>.</p>
+  </div>
+  <p class="foot"><span data-block="en">Last updated November 2, 2026</span><span data-block="tr" hidden>Son güncelleme: 2 Kasım 2026</span></p>
+</main>
+<script src="privacy.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Insight Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Familjen+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a test bench. Profile switcher on top, the deck the engine builds below (ranked left→right), each card with its rule trace */
+:root {
+  color-scheme: dark;
+  --night: #14112a;
+  --panel: #1e1a3a;
+  --sea: #0d3a5c;
+  --lagoon: #0c6b66;
+  --orange: #ee6420;
+  --pome: #a8213b;
+  --sand: #ecdcbc;
+  --ink: #fff8ee;
+  --dim: rgba(255,248,238,.62);
+  --line: rgba(255,248,238,.16);
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+body {
+  margin: 0; background: var(--night); color: var(--ink); font-family: var(--f-body); font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+header { display: flex; flex-direction: column; gap: 8px; }
+.kicker { font-family: var(--f-data); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(28px, 5vw, 40px); margin: 0; line-height: 1.05; text-wrap: balance; }
+.lede { margin: 0; color: var(--dim); max-width: 62ch; line-height: 1.5; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 14px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.chip small { font-family: var(--f-data); font-weight: 400; font-size: 10.5px; color: var(--dim); letter-spacing: .04em; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--night); border-color: var(--ink); }
+.chip[aria-pressed="true"] small { color: rgba(20,17,42,.6); }
+.chip:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.note { font-family: var(--f-data); font-size: 12px; color: var(--dim); }
+.note b { color: var(--orange); font-weight: 600; }
+
+.deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 18px; align-items: start; }
+.slot { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rank { font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
+.rank b { color: var(--ink); }
+.card { border-radius: 20px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; min-height: 470px; box-sizing: border-box; }
+.c-when { background: var(--sea); } .c-zones { background: var(--lagoon); } .c-stress { background: var(--pome); }
+.c-steps { background: var(--lagoon); } .c-sleep { background: var(--panel); } .c-sweat { background: var(--orange); }
+.c-climb { background: var(--sea); } .c-body { background: var(--sand); color: #1d1528; }
+.c-body .eyebrow, .c-body .facts span { color: rgba(29,21,40,.62); } .c-body .facts { border-color: rgba(29,21,40,.2); }
+.hero b { display: block; font-family: var(--f-display); font-weight: 900; font-size: clamp(40px, 9vw, 54px); line-height: .95; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.hero span { font-family: var(--f-data); font-size: 12px; color: var(--dim); }
+.ba { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: baseline; padding: 9px 0; border-top: 1px solid rgba(29,21,40,.18); }
+.ba .k { font-family: var(--f-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+.ba .from { font-family: var(--f-display); font-size: 18px; opacity: .5; text-decoration: line-through; }
+.ba .to { font-family: var(--f-display); font-size: 24px; font-weight: 900; }
+.ba .to small { font-family: var(--f-data); font-size: 11px; font-weight: 400; }
+.eyebrow { font-family: var(--f-data); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.persona { align-self: flex-start; font-family: var(--f-data); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 5px 10px; border: 1px solid currentColor; border-radius: 999px; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 22px; line-height: 1.1; margin: 0; text-wrap: balance; }
+.body { margin: 0; font-size: 15px; line-height: 1.45; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; border-top: 1px solid var(--line); padding-top: 12px; }
+.facts div { min-width: 0; } .facts b { display: block; font-family: var(--f-display); font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.facts span { font-size: 11px; color: var(--dim); }
+.trace { font-family: var(--f-data); font-size: 11.5px; line-height: 1.55; color: var(--dim); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.trace::before { content: "why this card"; display: block; color: var(--orange); letter-spacing: .1em; text-transform: uppercase; font-size: 10px; margin-bottom: 4px; }
+.skip { border: 1.5px dashed var(--line); border-radius: 20px; padding: 22px 20px; display: flex; flex-direction: column; gap: 10px; color: var(--dim); }
+.skip h2 { color: var(--ink); font-size: 18px; }
+
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
+footer { font-family: var(--f-data); font-size: 11px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="kicker">Wellbeing Recap · insight engine v0.2 · 8 cards</span>
+    <h1>Same cards, different people, different stories.</h1>
+    <p class="lede">Pick a profile. The engine reads its numbers, picks a persona for each card, ranks the cards by how interesting they are and skips the ones without enough data.</p>
+  </header>
+  <div class="chips" id="chips" role="group" aria-label="Profiles"></div>
+  <div class="note" id="note"></div>
+  <section class="deck" id="deck" aria-live="polite"></section>
+  <footer>Rules live in src/insights.js. All profiles are invented to test rule paths; no real user data lives here.</footer>
+</div>
+
+<script src="../src/insights.js"></script>
+<script src="../src/profiles.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const TITLES = { when: "When you move", zones: "Heart-rate DNA", stress: "Your stress week", steps: "Steps", sleep: "Sleep", body: "Your body", sweat: "Sweat", climb: "Climbing" };
+
+function vizWhen(p) {
+  const cx = 130, cy = 120, r0 = 42, rmax = 96, max = Math.max(...Object.values(p.byHour)); let s = "";
+  for (let h = 0; h < 24; h++) {
+    const v = p.byHour[h] || 0, a = h / 24 * Math.PI * 2 - Math.PI / 2 + Math.PI / 24, len = v ? 5 + v / max * (rmax - r0 - 5) : 2;
+    const x1 = cx + Math.cos(a) * r0, y1 = cy + Math.sin(a) * r0, x2 = cx + Math.cos(a) * (r0 + len), y2 = cy + Math.sin(a) * (r0 + len);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${v === max ? "#ee6420" : "rgba(255,248,238,.6)"}" stroke-width="7" stroke-linecap="round"/>`;
+  }
+  [[0, "12a"], [6, "6a"], [12, "12p"], [18, "6p"]].forEach(([h, t]) => { const a = h / 24 * Math.PI * 2 - Math.PI / 2; s += `<text x="${cx + Math.cos(a) * (rmax + 14)}" y="${cy + Math.sin(a) * (rmax + 14) + 4}" text-anchor="middle">${t}</text>`; });
+  return `<svg viewBox="0 0 260 240" role="img" aria-label="Activities by hour of day">${s}</svg>`;
+}
+function vizZones(c) {
+  const { easy, mid, hard } = c.shares, W = 260, y = 26, h = 26;
+  const seg = (x, w, fill, lbl) => w <= 0 ? "" : `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>${w > 34 ? `<text x="${x + w / 2}" y="${y + 17}" text-anchor="middle" style="fill:#14112a;font-weight:600">${lbl}</text>` : ""}`;
+  const e = easy * W, m = mid * W, hd = hard * W, tx = 0.8 * W;
+  return `<svg viewBox="0 0 ${W} 90" role="img" aria-label="Easy ${Math.round(easy * 100)}%, tempo ${Math.round(mid * 100)}%, hard ${Math.round(hard * 100)}%">
+    <clipPath id="zc"><rect x="0" y="${y}" width="${W}" height="${h}" rx="8"/></clipPath>
+    <g clip-path="url(#zc)">${seg(0, e, "#ecdcbc", "easy")}${seg(e, m, "#ee6420", "tempo")}${seg(e + m, hd, "#a8213b", "hard")}</g>
+    <line x1="${tx}" x2="${tx}" y1="${y - 10}" y2="${y + h + 10}" stroke="#fff8ee" stroke-width="2" stroke-dasharray="3 3"/>
+    <text x="${tx}" y="${y - 14}" text-anchor="middle" style="fill:#fff8ee">80% easy target</text>
+    <text x="0" y="${y + h + 22}">Z1–2</text><text x="${W}" y="${y + h + 22}" text-anchor="end">Z4–5</text></svg>`;
+}
+function vizStress(c) {
+  const W = 260, H = 110, vals = c.byDay.map(e => e[1]), lo = Math.min(...vals) - 4, hi = Math.max(...vals), bw = W / 7;
+  const peak = Math.max(...vals);
+  return `<svg viewBox="0 -16 ${W} ${H + 34}" role="img" aria-label="Average stress by weekday: ${c.byDay.map(e => e[0] + " " + Math.round(e[1])).join(", ")}">` +
+    c.byDay.map(([d, v], i) => { const bh = Math.max(3, (v - lo) / (hi - lo) * H), x = i * bw + 5;
+      return `<rect x="${x}" y="${H - bh}" width="${bw - 10}" height="${bh}" rx="5" fill="${v === peak ? "#fff8ee" : "rgba(255,248,238,.38)"}"/>
+      <text x="${x + (bw - 10) / 2}" y="${H - bh - 5}" text-anchor="middle" style="fill:#fff8ee">${Math.round(v)}</text>
+      <text x="${x + (bw - 10) / 2}" y="${H + 14}" text-anchor="middle">${d}</text>`; }).join("") + `</svg>`;
+}
+
+function renderCard(c, p, i) {
+  const viz = c.id === "when" ? vizWhen(p) : c.id === "zones" ? vizZones(c) : c.id === "stress" ? vizStress(c)
+    : c.beforeAfter ? `<div>${c.beforeAfter.map(r => `<div class="ba"><span class="k">${esc(r.label)}</span><span class="from">${esc(r.from)}</span><span>→</span><span class="to">${esc(r.to)}${r.unit ? ` <small>${esc(r.unit)}</small>` : ""}</span></div>`).join("")}</div>`
+    : c.hero ? `<div class="hero"><b>${esc(c.hero[0])}</b><span>${esc(c.hero[1])}</span></div>` : "";
+  return `<div class="slot">
+    <div class="rank"><span>Card <b>#${i + 1}</b></span><span>interest ${c.score.toFixed(2)}</span></div>
+    <article class="card c-${c.id}">
+      <div class="eyebrow">${TITLES[c.id]}</div>
+      <span class="persona">${esc(c.persona)}</span>
+      <h2>${esc(c.headline)}</h2>
+      ${viz}
+      <p class="body">${esc(c.body)}</p>
+      <div class="facts">${c.facts.map(([k, v]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
+    </article>
+    <pre class="trace">${esc(c.trace.join("\n"))}</pre>
+  </div>`;
+}
+function renderSkip(c) {
+  return `<div class="slot"><div class="rank"><span>Skipped</span><span>—</span></div>
+    <div class="skip"><div class="eyebrow">${TITLES[c.id]}</div><h2>Not enough data yet</h2><p class="body">${esc(c.reason)}</p></div></div>`;
+}
+
+function show(id) {
+  const p = PROFILES.find(x => x.id === id) || PROFILES[0];
+  document.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === p.id));
+  $("#note").innerHTML = p.invented ? `<b>Invented example.</b> ${esc(p.note)}` : `<b>Real data.</b> ${esc(p.note)}`;
+  const d = Insights.deck(p);
+  $("#deck").innerHTML = d.shown.map((c, i) => renderCard(c, p, i)).join("") + d.skipped.map(renderSkip).join("");
+  try { localStorage.setItem("insight-lab-profile", p.id); } catch (e) {}
+}
+$("#chips").innerHTML = PROFILES.map(p => `<button class="chip" type="button" data-id="${p.id}" aria-pressed="false">${esc(p.name)}<small>${p.invented ? "example" : "real"}</small></button>`).join("");
+$("#chips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) show(b.dataset.id); });
+let start = "duathlete"; try { start = localStorage.getItem("insight-lab-profile") || start; } catch (e) {}
+show(start);
+</script>
+</body>
+</html>

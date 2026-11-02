@@ -1,0 +1,81 @@
+// Run with: node --test tests/
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const I = require("../src/insights.js");
+const PROFILES = require("../src/profiles.js");
+const P = Object.fromEntries(PROFILES.map(p => [p.id, p]));
+const persona = (id, card) => I.deck(P[id]).shown.find(c => c.id === card)?.persona;
+
+test("each profile lands on its intended persona", () => {
+  const expected = {
+    duathlete: { when: "double shift", zones: "base builder", stress: "busy weekender" },
+    cyclist: { when: "early bird", zones: "polarized", stress: "monday blues" },
+    lifter: { when: "night owl", zones: "intensity junkie", stress: "steady" },
+    hiker: { when: "weekend warrior", zones: "tempo lover", stress: "midweek pressure" },
+  };
+  for (const [id, cards] of Object.entries(expected))
+    for (const [card, want] of Object.entries(cards))
+      assert.equal(persona(id, card), want, `${id}/${card}`);
+});
+
+test("cards without enough data are skipped with a reason", () => {
+  const d = I.deck(P.newbie);
+  for (const c of d.skipped) assert.ok(c.reason.length > 10, c.id);
+});
+
+test("deck is ordered by interest score", () => {
+  for (const p of PROFILES) {
+    const s = I.deck(p).shown.map(c => c.score);
+    assert.deepEqual(s, [...s].sort((a, b) => b - a), p.id);
+  }
+});
+
+test("scores stay between 0 and 1 and every shown card has a trace", () => {
+  for (const p of PROFILES)
+    for (const c of I.deck(p).shown) {
+      assert.ok(c.score >= 0 && c.score <= 1, `${p.id}/${c.id} score ${c.score}`);
+      assert.ok(c.trace.some(t => t.startsWith("rule:")), `${p.id}/${c.id} trace`);
+    }
+});
+
+test("an even training week with no dominant slot becomes 'anytime athlete'", () => {
+  // dawn, midday and night each get 25%, so no window dominates and no two stand out
+  const byHour = Object.fromEntries([5, 8, 11, 13, 16, 19, 22, 1].map(h => [h, 5]));
+  const c = I.when({ byHour, byWeekday: { Mon: 5, Tue: 5, Wed: 5, Thu: 5, Fri: 4, Sat: 3, Sun: 3 } });
+  assert.equal(c.persona, "anytime athlete");
+});
+
+test("new cards land on their intended personas", () => {
+  const expected = {
+    duathlete: { steps: "10k club", sleep: "almost there", body: "upgraded" },
+    cyclist: { steps: "steady walker", sleep: "sleep champion", body: "upgraded" },
+    lifter: { steps: "every step counts", sleep: "short sleeper" },
+    hiker: { steps: "step machine", sleep: "well rested", body: "on the way up" },
+  };
+  for (const [id, cards] of Object.entries(expected))
+    for (const [card, want] of Object.entries(cards))
+      assert.equal(persona(id, card), want, `${id}/${card}`);
+});
+
+test("body card is hidden when nothing improved, and never shows a worse metric", () => {
+  const d = I.deck(P.lifter);
+  assert.ok(d.skipped.some(c => c.id === "body" && /by design/.test(c.reason)));
+  for (const p of PROFILES) {
+    const b = I.deck(p).shown.find(c => c.id === "body");
+    if (b) assert.ok(b.beforeAfter.every(r => r.status !== "worse"), p.id);
+  }
+});
+
+test("comparison ladders read naturally", () => {
+  assert.match(I.climb({ climbMeters: 5446 }).body, /62% of the way up Mount Everest/);
+  assert.match(I.climb({ climbMeters: 2100 }).body, /2\.5× the height of the Burj Khalifa/);
+  assert.match(I.steps({ steps: { total: 1508000, days: 290, bestDay: { date: "x", steps: 1 } } }).body, /94% of the length of Italy/);
+  assert.match(I.sweat({ sweatLiters: 56.8 }).body, /About 3 office water-cooler jugs/);
+  assert.match(I.sweat({ sweatLiters: 310 }).body, /2\.1 bathtubs/);
+});
+
+test("brand-new watch only gets the cards it has data for", () => {
+  const d = I.deck(P.newbie);
+  assert.deepEqual(d.shown.map(c => c.id), ["steps"]);
+  assert.equal(d.skipped.length, 7);
+});
