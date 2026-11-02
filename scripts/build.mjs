@@ -1,7 +1,8 @@
 // Builds the public site into dist/ for recap.mertcangenc.com.
 //   - copies app/ (the site root) and src/ (as js/)
-//   - self-hosts zip.js and the font families, so the page makes
-//     no third-party requests at all ("no tracking" stays literally true)
+//   - self-hosts zip.js and the font families; the only outside request is
+//     the anonymous GoatCounter pixel on the start page (img-src only;
+//     connect-src stays 'none', so file data still can't leave the page)
 //   - adds link-preview meta tags, licenses.txt and the CNAME file
 //   - fails if a page lacks the no-network CSP, has inline scripts or loads
 //     anything from another host
