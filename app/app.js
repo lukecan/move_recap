@@ -320,7 +320,8 @@ function setPause() { const b = $("#pause"); b.textContent = paused ? "▶" : "�
 function togglePause(force) { const want = force ?? !paused; if (want === paused) return; if (want) elapsed += performance.now() - t0; else t0 = performance.now(); paused = want; setPause(); }
 /* ---------- share sheet ---------- */
 const sheetState = { scope: "card", theme: (() => { try { return localStorage.getItem("wr-theme") || "antalya"; } catch { return "antalya"; } })(), format: "story" };
-let prepared = { key: "", files: [] }, previewUrl = "", wasPaused = false, lastFocus = null, prepToken = 0;
+let prepared = { key: "", files: [] }, previewUrl = "", galleryUrls = [], wasPaused = false, lastFocus = null, prepToken = 0;
+function clearGallery() { galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = []; $("#sheetGallery").replaceChildren(); }
 const caption = () => `${summary}\n\nMade free at recap.mertcangenc.com #WellbeingRecap`;
 const fileName = (sp, i) => `wellbeing-recap-${String(i + 1).padStart(2, "0")}-${sp.id}-${sheetState.theme}-${sheetState.format}.png`;
 function syncChips() {
@@ -332,24 +333,34 @@ function syncChips() {
 async function prepare() {
   const token = ++prepToken, key = `${sheetState.scope}|${sheetState.theme}|${sheetState.format}|${idx}`;
   $("#sheetShare").disabled = true; $("#sheetNote").textContent = "Preparing your image…"; syncChips();
-  const list = sheetState.scope === "all" ? specs.map((sp, i) => [sp, i]).filter(([sp]) => sp) : [[specs[idx], idx]];
+  const all = sheetState.scope === "all";
+  const list = all ? specs.map((sp, i) => [sp, i]).filter(([sp]) => sp) : [[specs[idx], idx]];
+  // "All cards" shows every image side by side, so a theme can be judged across the whole recap
+  $("#sheetPreview").hidden = all; $("#sheetGallery").hidden = !all;
+  if (all) { clearGallery(); $("#sheetGallery").scrollLeft = 0; }
   const files = [];
   for (const [sp, i] of list) {
     const canvas = await Share.render(sp, { theme: sheetState.theme, format: sheetState.format });
     if (token !== prepToken) return;               // a newer choice replaced this one
-    files.push(await Share.toFile(canvas, fileName(sp, i)));
-    if (files.length === 1 || i === idx) { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(files.at(-1)); $("#sheetImg").src = previewUrl; }
+    const file = await Share.toFile(canvas, fileName(sp, i));
+    if (token !== prepToken) return;               // checked again: encoding is async too
+    files.push(file);
+    if (all) {
+      const url = URL.createObjectURL(files.at(-1)); galleryUrls.push(url);
+      $("#sheetGallery").append(Object.assign(document.createElement("img"), { src: url, alt: `Card ${files.length} of ${list.length}` }));
+      $("#sheetNote").textContent = `Drawing ${files.length} of ${list.length}…`;
+    } else { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(files.at(-1)); $("#sheetImg").src = previewUrl; }
   }
   prepared = { key, files };
   $("#sheetShare").disabled = false;
-  $("#sheetNote").textContent = sheetState.scope === "all" ? `${files.length} images ready.` : "Ready.";
+  $("#sheetNote").textContent = all ? `${files.length} cards · swipe to see them all, or switch the theme.` : "Ready.";
 }
 function openSheet(scope = "card") {
   if (!specs[idx] && scope === "card") return;
   sheetState.scope = scope; wasPaused = paused; togglePause(true); lastFocus = document.activeElement;
   $("#sheet").hidden = false; syncChips(); prepare(); $("#sheetClose").focus();
 }
-function closeSheet() { $("#sheet").hidden = true; prepToken++; togglePause(wasPaused); (lastFocus || $("#next")).focus(); }
+function closeSheet() { $("#sheet").hidden = true; prepToken++; clearGallery(); togglePause(wasPaused); (lastFocus || $("#next")).focus(); }
 function download(files) {
   files.forEach((f, n) => setTimeout(() => {
     const url = URL.createObjectURL(f), a = Object.assign(document.createElement("a"), { href: url, download: f.name });

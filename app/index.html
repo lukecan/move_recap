@@ -169,6 +169,10 @@ button { font: inherit; }
 .sheet-head button { background: none; border: 0; color: var(--ink); font-size: 18px; cursor: pointer; padding: 6px 10px; }
 .sheet-preview { display: grid; place-items: center; background: rgba(0,0,0,.25); border-radius: 14px; padding: 10px; min-height: 160px; }
 .sheet-preview img { display: block; max-width: 100%; max-height: 42vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+/* all cards: a swipeable strip, redrawn whenever the theme or size changes */
+.gallery { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; background: rgba(0,0,0,.25); border-radius: 14px; padding: 10px; min-height: 160px; scrollbar-width: thin; }
+.gallery:focus-visible { outline: 2px solid var(--accent, #ffb347); outline-offset: 2px; }
+.gallery img { flex: 0 0 auto; height: min(42vh, 380px); width: auto; scroll-snap-align: center; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 .opt { display: flex; flex-direction: column; gap: 6px; }
 .opt > span { font-family: var(--f-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -267,7 +271,8 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
   <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="sheet-box">
       <div class="sheet-head"><h3 id="sheetTitle">Share</h3><button id="sheetClose" type="button" aria-label="Close">✕</button></div>
-      <div class="sheet-preview"><img id="sheetImg" alt="Preview of the image you'll share"></div>
+      <div class="sheet-preview" id="sheetPreview"><img id="sheetImg" alt="Preview of the image you'll share"></div>
+      <div class="gallery" id="sheetGallery" hidden tabindex="0" role="group" aria-label="All cards in this theme"></div>
       <div class="opt"><span>What</span><div class="chips" data-opt="scope"><button type="button" data-v="card">This card</button><button type="button" data-v="all">All cards</button></div></div>
       <div class="opt"><span>Theme</span><div class="chips" data-opt="theme"><button type="button" data-v="antalya">Antalya</button><button type="button" data-v="bib">Race Bib</button><button type="button" data-v="topo">Topo</button></div></div>
       <div class="opt"><span>Size</span><div class="chips" data-opt="format"><button type="button" data-v="story">Story 9:16<small>Instagram · WhatsApp</small></button><button type="button" data-v="post">Post 4:5<small>Strava · LinkedIn · feed</small></button></div></div>
