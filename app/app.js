@@ -2,14 +2,14 @@
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = n => Math.round(n).toLocaleString("en-US");
-const TITLES = { when: "When you move", zones: "Heart-rate DNA", stress: "Your stress week", steps: "Steps", sleep: "Sleep", body: "Your body", sweat: "Sweat", climb: "Climbing" };
+const TITLES = { when: "When you move", zones: "Heart-rate DNA", stress: "Your stress week", cadence: "Your rhythm", power: "Power", steps: "Steps", sleep: "Sleep", body: "Your body", sweat: "Sweat", climb: "Climbing" };
 const FOOT = '<div class="foot">From your Garmin Connect data</div>';
 
 /* ---------- example (invented) ---------- */
 const EXAMPLE = {
   period: { mode: "year", label: "2026 Recap", range: "Jan 1 → Nov 2, 2026", days: 306 },
   name: "Alex", example: true,
-  totals: { activities: 96, activeDays: 81, longestStreak: 6, hours: 142, families: { "walking & hiking": { count: 58, km: 690, hours: 110 }, running: { count: 21, km: 140, hours: 15 }, strength: { count: 17, km: 0, hours: 17 } } },
+  totals: { activities: 110, activeDays: 90, longestStreak: 6, hours: 158, families: { "walking & hiking": { count: 58, km: 690, hours: 110 }, cycling: { count: 14, km: 420, hours: 16 }, running: { count: 21, km: 140, hours: 15 }, strength: { count: 17, km: 0, hours: 17 } } },
   byHour: { 8: 9, 9: 14, 10: 12, 11: 6, 14: 4, 17: 3, 19: 4 },
   byWeekday: { Mon: 3, Tue: 4, Wed: 2, Thu: 5, Fri: 3, Sat: 18, Sun: 17 },
   zoneHours: [14, 18, 22, 6, 1],
@@ -18,6 +18,8 @@ const EXAMPLE = {
   sleep: { nights: 280, avgHours: 7.1, avgScore: 74, bedtime: "23:05", wake: "06:50" },
   body: { days: 295, rhr: [60, 59], vo2: [40, 42], fitnessAge: [38.0, 37.2] },
   sweatLiters: 140, climbMeters: 14000,
+  cadence: { runs: 21, spm: 164, first: 160, last: 167 },
+  power: { sport: "cycling", sessions: 14, kJ: 9800, avgW: 172, bestNP: 214, maxW: 612, rpm: 86 },
 };
 
 /* ---------- language (landing page only; cards stay English for now) ---------- */
@@ -229,6 +231,7 @@ function totalsCard(s) {
 function insightCard(c, s) {
   const viz = c.id === "when" ? vizWhen(s.byHour) : c.id === "zones" ? vizZones(c.shares) : c.id === "stress" ? vizStress(c.byDay)
     : c.beforeAfter ? `<div>${c.beforeAfter.map(r => `<div class="ba"><span class="k">${esc(r.label)}</span><span class="from">${esc(r.from)}</span><span>→</span><span class="to">${esc(r.to)}${r.unit ? ` <small>${esc(r.unit)}</small>` : ""}</span></div>`).join("")}</div>`
+    : c.tiles ? `<div class="grid2">${c.tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>`
     : c.hero ? `<div class="hero"><b>${esc(c.hero[0])}</b><span>${esc(c.hero[1])}</span></div>` : "";
   return [`c-${c.id}`, `<div class="eyebrow">${TITLES[c.id]}</div><span class="persona">${esc(c.persona)}</span><h2>${esc(c.headline)}</h2>${viz}<p>${esc(c.body)}</p>${FOOT}`];
 }
@@ -270,7 +273,8 @@ function shareSpecs(s, shown) {
   const insight = c => ({ ...base, id: c.id, eyebrow: TITLES[c.id], chip: c.persona, headline: c.headline, body: c.body,
     big: c.beforeAfter ? null : c.hero || null,
     viz: c.id === "when" ? { type: "clock", byHour: s.byHour } : c.id === "zones" ? { type: "zones", shares: c.shares }
-      : c.id === "stress" ? { type: "bars", rows: c.byDay } : c.beforeAfter ? { type: "ba", rows: c.beforeAfter } : null });
+      : c.id === "stress" ? { type: "bars", rows: c.byDay } : c.beforeAfter ? { type: "ba", rows: c.beforeAfter }
+      : c.tiles ? { type: "tiles", tiles: c.tiles } : null });
   const end = { ...base, id: "end", eyebrow: s.period.label, headline: `${s.name ? s.name + "'s" : "My"} ${s.period.mode === "year" ? s.period.label : "recap"}`,
     viz: { type: "tiles", tiles: plainTiles(s, shown) } };
   return [intro, totals, ...shown.map(insight), ...(s.source === "csv" ? [null] : []), end];
@@ -303,7 +307,7 @@ function closeStory() { $("#story").hidden = true; document.body.style.overflow 
 function show(n) {
   idx = Math.max(0, Math.min(cards.length - 1, n)); elapsed = 0; t0 = performance.now();
   cards.forEach((c, i) => (c.hidden = i !== idx));
-  $("#stage").classList.toggle("light", ["c-body", "c-totals", "c-sweat"].some(c => cards[idx].classList.contains(c)));
+  $("#stage").classList.toggle("light", ["c-body", "c-totals", "c-sweat", "c-power"].some(c => cards[idx].classList.contains(c)));
   $("#shareCard").hidden = !specs[idx] || cards[idx].classList.contains("c-end");
   bars.forEach((b, i) => { b.className = i < idx ? "done" : ""; b.firstChild.style.width = ""; });
   cards[idx].querySelectorAll(":scope > *").forEach(el => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });

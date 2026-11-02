@@ -15,7 +15,8 @@
  */
 (function (root) {
   "use strict";
-  const family = (root.ParseExport || (typeof require !== "undefined" ? require("./parse-export.js") : {})).family;
+  const PE = root.ParseExport || (typeof require !== "undefined" ? require("./parse-export.js") : {});
+  const family = PE.family, motion = PE.motion;
   const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const GARMIN_PAGE = 20;
@@ -68,10 +69,14 @@
     if (!head || !head.includes("Activity Type") || !head.includes("Date"))
       throw new Error("This CSV doesn't look like Garmin Connect's activity export. Use “Export CSV” on the Activities page.");
     const col = name => head.indexOf(name);
-    const C = { type: col("Activity Type"), date: col("Date"), dist: col("Distance"), time: col("Time"), ascent: col("Total Ascent"), cal: col("Calories") };
+    const C = { type: col("Activity Type"), date: col("Date"), dist: col("Distance"), time: col("Time"), ascent: col("Total Ascent"), cal: col("Calories"),
+      // columns only appear when some activity has them; cadence is steps/min for runs, rpm for rides
+      spm: col("Avg Run Cadence"), rpm: col("Avg Bike Cadence"), avgW: col("Avg Power"), np: col("Normalized Power® (NP®)"), maxW: col("Max Power") };
+    const opt = (r, i) => (i >= 0 ? number(r[i]) : null);
     const rows = body.map(r => ({
       type: r[C.type] || "", date: (r[C.date] || "").trim(), dist: number(r[C.dist]), secs: seconds(r[C.time]),
       ascent: C.ascent >= 0 ? number(r[C.ascent]) : null,
+      spm: opt(r, C.spm), rpm: opt(r, C.rpm), avgW: opt(r, C.avgW), np: opt(r, C.np), maxW: opt(r, C.maxW),
     })).filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.date));
     if (!rows.length) throw new Error("No activities found in this CSV.");
 
@@ -97,6 +102,7 @@
     for (let i = 1; i < active.length; i++) { run = dayDiff(active[i - 1], active[i]) === 1 ? run + 1 : 1; streak = Math.max(streak, run); }
     const start = dates[0], end = dates.at(-1);
     const truncated = rows.length <= GARMIN_PAGE;
+    const { cadence, power } = motion([...rows].sort((a, b) => (a.date < b.date ? -1 : 1)).map(r => ({ ...r, fam: family(r.type.toLowerCase()) })));
 
     return {
       source: "csv", truncated, units,
@@ -108,6 +114,7 @@
       stressByWeekday: {}, days: 0,
       steps: null, sleep: { nights: 0 }, body: { days: 0 }, sweatLiters: 0,
       climbMeters: climb, climbSource: "workouts",
+      cadence, power,
     };
   }
 

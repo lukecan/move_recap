@@ -355,16 +355,99 @@
       facts: [["climbed", heightShort(m, units)], ["floors", num(m / 3)], ["≈", r.name]], trace };
   }
 
+  /* ------------------------------------------------------------- CADENCE */
+  // Songs whose tempo matches a running cadence (steps per minute = beats per minute).
+  // BPMs as published by running-playlist sources (kurufootwear.com, runtothefinish.com,
+  // David Lloyd 160 BPM playlist, flotrack.org); spread so every cadence has three near neighbours.
+  const SONGS = [
+    { title: "Mr. Brightside", artist: "The Killers", bpm: 148 },
+    { title: "Dog Days Are Over", artist: "Florence + The Machine", bpm: 150 },
+    { title: "Sk8er Boi", artist: "Avril Lavigne", bpm: 150 },
+    { title: "Everlong", artist: "Foo Fighters", bpm: 155 },
+    { title: "Spaceman", artist: "The Killers", bpm: 155 },
+    { title: "Don't Stop Me Now", artist: "Queen", bpm: 156 },
+    { title: "The Greatest Show", artist: "The Greatest Showman cast", bpm: 158 },
+    { title: "Shake It Off", artist: "Taylor Swift", bpm: 160 },
+    { title: "Hey Ya!", artist: "OutKast", bpm: 160 },
+    { title: "Happy", artist: "Pharrell Williams", bpm: 160 },
+    { title: "Countdown", artist: "Beyoncé", bpm: 167 },
+    { title: "Sabotage", artist: "Beastie Boys", bpm: 168 },
+    { title: "Lose Yourself", artist: "Eminem", bpm: 171 },
+    { title: "Blinding Lights", artist: "The Weeknd", bpm: 171 },
+    { title: "Empire State of Mind", artist: "JAY-Z & Alicia Keys", bpm: 174 },
+    { title: "Footloose", artist: "Kenny Loggins", bpm: 174 },
+    { title: "Hymn for the Weekend", artist: "Coldplay", bpm: 180 },
+    { title: "Love It If We Made It", artist: "The 1975", bpm: 180 },
+    { title: "Won't Back Down", artist: "Eminem", bpm: 180 },
+    { title: "Love Me Like You Do", artist: "Ellie Goulding", bpm: 190 },
+    { title: "I Wanna Get Better", artist: "Bleachers", bpm: 190 },
+  ];
+  // the three songs nearest a cadence; one is picked at random so recaps differ
+  const songsFor = spm => [...SONGS].sort((a, b) => Math.abs(a.bpm - spm) - Math.abs(b.bpm - spm) || a.bpm - b.bpm).slice(0, 3);
+
+  // cadence: { runs, spm, first, last } — duration-weighted average steps/min over runs, plus first/last 5 runs
+  function cadence({ cadence: c, random = Math.random }) {
+    const trace = [];
+    if (!c || c.runs < 5) return { id: "cadence", skip: true, reason: `Only ${c ? c.runs : 0} runs with cadence; need 5.` };
+    const spm = Math.round(c.spm), near = songsFor(spm), song = near[Math.min(2, Math.floor(random() * near.length))];
+    const diff = Math.abs(song.bpm - spm);
+    trace.push(`${spm} spm over ${c.runs} runs; nearest songs ${near.map(x => x.bpm).join("/")} → picked ${song.title} (${song.bpm}, off by ${diff})`);
+    let persona, score = 0.6;
+    if (spm >= 178) persona = "quick feet";
+    else if (spm >= 168) persona = "smooth strider";
+    else if (spm >= 158) persona = "steady strider";
+    else persona = "long strider";
+    trace.push(`rule: ${spm} spm → ${persona}`);
+    let body = diff <= 2
+      ? `You run at ${spm} steps a minute and ${song.artist}'s track plays at ${song.bpm} BPM, so every step lands on the beat.`
+      : `You run at ${spm} steps a minute and ${song.artist}'s track plays at ${song.bpm} BPM. Queue it up and you'll run in step.`;
+    const gain = Math.round(c.last - c.first);
+    if (gain >= 3) { body += ` You're ${gain} steps a minute quicker than in your first runs.`; score += 0.1; trace.push(`rule: +${gain} spm since first runs → mention, +0.1`); }
+    return { id: "cadence", skip: false, score, persona, headline: diff <= 2 ? `"${song.title}" is your perfect running song.` : `"${song.title}" is right in your stride.`, body,
+      hero: [String(spm), "steps per minute"], song,
+      facts: [["cadence", `${spm} spm`], ["song", `${song.title} · ${song.bpm} BPM`], ["runs", String(c.runs)]], trace };
+  }
+
+  /* --------------------------------------------------------------- POWER */
+  // Work done = average watts × seconds. 1 kWh = 3,600 kJ.
+  const ENERGY = [
+    { upTo: 1.5,      size: 0.015, name: "phone charges", say: r => `That's enough to fully charge a phone about ${count(r)} times.` },
+    { upTo: 20,       size: 0.15,  name: "kettles",       say: r => `That's enough to boil about ${count(r)} full kettles.` },
+    { upTo: Infinity, size: 0.16,  name: "EV km",         say: (r, u) => `That's enough to drive an electric car about ${distance(r, u)}.` },
+  ];
+  // power: { sport: "cycling" | "running", sessions, kJ, avgW, bestNP, maxW, rpm }
+  function power({ power: p, units }) {
+    const trace = [];
+    if (!p) return { id: "power", skip: true, reason: "No power data (needs 3 rides or 5 runs with a power meter)." };
+    const kWh = p.kJ / 3600, r = rung(ENERGY, kWh), bike = p.sport === "cycling";
+    trace.push(`${p.sport}: ${p.sessions} sessions, ${num(p.kJ)} kJ (${kWh.toFixed(2)} kWh) → ${r.name}; avg ${num(p.avgW)} W, best NP ${p.bestNP}, peak ${p.maxW}`);
+    let persona, score;
+    if (!bike) { persona = "power runner"; score = 0.45; }
+    else if (p.avgW >= 220) { persona = "watt machine"; score = 0.65; }
+    else if (p.avgW >= 160) { persona = "diesel engine"; score = 0.6; }
+    else { persona = "power builder"; score = 0.55; }
+    trace.push(`rule: ${p.sport}, avg ${num(p.avgW)} W → ${persona}`);
+    const body = r.say(kWh / r.size, units) + (bike ? " On a bike, every kilojoule of work burns about one calorie." : " Garmin measures this from your running power, run by run.");
+    const tiles = [[`${num(p.avgW)} W`, bike ? "average per ride" : "average per run"]];
+    if (p.bestNP) tiles.push([`${num(p.bestNP)} W`, "best normalized power"]);
+    if (p.maxW) tiles.push([`${num(p.maxW)} W`, "peak"]);
+    if (bike && p.rpm) tiles.push([`${num(p.rpm)} rpm`, "pedal cadence"]);
+    else tiles.push([num(p.sessions), bike ? "rides with power" : "runs with power"]);
+    return { id: "power", skip: false, score, persona,
+      headline: bike ? `You put ${num(p.kJ)} kJ into the pedals.` : `You put ${num(p.kJ)} kJ of power into your runs.`,
+      body, tiles, facts: [["work", `${num(p.kJ)} kJ`], ["average", `${num(p.avgW)} W`], ["≈", r.name]], trace };
+  }
+
   /* --------------------------------------------------------------- DECK */
   function deck(stats) {
-    const cards = [when, zones, stressDay, steps, sleep, body, sweat, climb].map(f => f(stats));
+    const cards = [when, zones, stressDay, cadence, power, steps, sleep, body, sweat, climb].map(f => f(stats));
     return {
       shown: cards.filter(c => !c.skip).sort((a, b) => b.score - a.score),
       skipped: cards.filter(c => c.skip),
     };
   }
 
-  const api = { when, zones, stressDay, steps, sleep, body, sweat, climb, deck, DAYS, distance, heightShort };
+  const api = { when, zones, stressDay, cadence, power, steps, sleep, body, sweat, climb, deck, DAYS, distance, heightShort, SONGS, songsFor };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Insights = api;
 })(typeof window !== "undefined" ? window : globalThis);

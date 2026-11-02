@@ -18,6 +18,7 @@
       body: { days: 205, rhr: [57, 50], vo2: [42, 46], fitnessAge: [37.0, 34.8] },
       sweatLiters: 61.5,
       climbMeters: 4800,
+      cadence: { runs: 120, spm: 176, first: 171, last: 179 },
     },
     {
       id: "cyclist", name: "Early-bird cyclist", note: "Invented example", invented: true,
@@ -31,6 +32,7 @@
       body: { days: 335, rhr: [52, 49], vo2: [52, 55], fitnessAge: [31.0, 29.5] },
       sweatLiters: 310,
       climbMeters: 2100,
+      power: { sport: "cycling", sessions: 140, kJ: 410000, avgW: 205, bestNP: 262, maxW: 980, rpm: 89 },
     },
     {
       id: "lifter", name: "Night-owl lifter", note: "Invented example", invented: true,
