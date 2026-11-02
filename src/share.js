@@ -21,6 +21,9 @@
   "use strict";
 
   const SITE = "recap.mertcangenc.com";
+  // uppercase in the card's language (Turkish i → İ)
+  let UP = "en";
+  const up = s => String(s).toLocaleUpperCase(UP);
   const FORMATS = {
     story: { w: 1080, h: 1920, top: 250, bottom: 330, scale: 1 },
     post: { w: 1080, h: 1350, top: 110, bottom: 120, scale: 0.84 },
@@ -196,7 +199,7 @@
       const rh = h / Math.max(viz.rows.length, 1);
       viz.rows.forEach((r, i) => {
         const ry = y + i * rh; ctx.strokeStyle = C.track; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x + w, ry); ctx.stroke();
-        ctx.fillStyle = C.dim; ctx.font = mono(Math.round(rh * .17)); ctx.fillText(r.label.toUpperCase(), x, ry + rh * .3);
+        ctx.fillStyle = C.dim; ctx.font = mono(Math.round(rh * .17)); ctx.fillText(up(r.label), x, ry + rh * .3);
         // label sits on its own line; numbers right-aligned underneath so long labels never collide
         const unitW = r.unit ? rh * .62 : 0, base = ry + rh * .84;
         ctx.textAlign = "right";
@@ -217,7 +220,7 @@
       const rh = Math.min(h / Math.max(viz.rows.length, 1), 150);
       viz.rows.forEach(([lab, right, frac], i) => {
         const ry = y + i * rh;
-        ctx.fillStyle = C.ink; ctx.font = `600 ${Math.round(rh * .32)}px ${T.body}`; ctx.fillText(lab.charAt(0).toUpperCase() + lab.slice(1), x, ry + rh * .38);
+        ctx.fillStyle = C.ink; ctx.font = `600 ${Math.round(rh * .32)}px ${T.body}`; ctx.fillText(up(lab.charAt(0)) + lab.slice(1), x, ry + rh * .38);
         ctx.fillStyle = C.dim; ctx.font = mono(Math.round(rh * .24)); ctx.textAlign = "right"; ctx.fillText(right, x + w, ry + rh * .38); ctx.textAlign = "left";
         ctx.fillStyle = C.track; roundRect(ctx, x, ry + rh * .52, w, rh * .16, rh * .08); ctx.fill();
         ctx.fillStyle = C.ink; roundRect(ctx, x, ry + rh * .52, Math.max(rh * .16, w * frac), rh * .16, rh * .08); ctx.fill();
@@ -227,13 +230,13 @@
     if (viz.type === "ladder") {
       // top to bottom: the next rung (dashed), you, then the rungs you passed
       const items = [...viz.rungs].reverse(), k = items.findIndex(r => r.done);
-      items.splice(k < 0 ? items.length : k, 0, { you: true, name: "You", label: viz.label });
+      items.splice(k < 0 ? items.length : k, 0, { you: true, name: viz.you || "You", label: viz.label });
       const rh = Math.min(h / items.length, 96);
       items.forEach((r, i) => {
         const ry = y + i * rh;
         if (r.you) {
           ctx.fillStyle = C.peak; roundRect(ctx, x, ry + rh * .14, w, rh * .7, rh * .35); ctx.fill();
-          ctx.fillStyle = C.bg; ctx.font = `700 ${Math.round(rh * .32)}px ${T.body}`; ctx.fillText(theme.upper ? "YOU" : "You", x + rh * .35, ry + rh * .6);
+          ctx.fillStyle = C.bg; ctx.font = `700 ${Math.round(rh * .32)}px ${T.body}`; ctx.fillText(theme.upper ? up(r.name) : r.name, x + rh * .35, ry + rh * .6);
           ctx.font = mono(Math.round(rh * .27)); ctx.textAlign = "right"; ctx.fillText(r.label, x + w - rh * .35, ry + rh * .6); ctx.textAlign = "left";
           return;
         }
@@ -250,9 +253,9 @@
         const tx = x + (i % cols) * tw, ty = y + Math.floor(i / cols) * th;
         ctx.strokeStyle = C.track; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + tw - 24, ty); ctx.stroke();
         ctx.fillStyle = C.ink; ctx.font = `${theme.weights.display} ${Math.round(th * (String(v).length > 10 ? .22 : .3))}px ${T.display}`;
-        const lines = wrap(ctx, theme.upper ? String(v).toUpperCase() : v, tw - 40, 2);
+        const lines = wrap(ctx, theme.upper ? up(v) : v, tw - 40, 2);
         lines.forEach((l, j) => ctx.fillText(l, tx, ty + th * .4 + j * th * .28));
-        ctx.fillStyle = C.dim; ctx.font = mono(Math.round(th * .14)); ctx.fillText(String(k).toUpperCase(), tx, ty + th * (lines.length > 1 ? .9 : .66));
+        ctx.fillStyle = C.dim; ctx.font = mono(Math.round(th * .14)); ctx.fillText(up(k), tx, ty + th * (lines.length > 1 ? .9 : .66));
       });
       return rowsN * th;
     }
@@ -261,6 +264,7 @@
 
   /* ------------------------------------------------------------------ render */
   async function render(spec, { theme: themeKey = "antalya", format = "story" } = {}) {
+    UP = spec.lang === "tr" ? "tr" : "en";
     const theme = THEMES[themeKey] || THEMES.antalya, F = FORMATS[format] || FORMATS.story, C = theme.colors(spec.id), s = F.scale;
     await loadFonts(theme);
     const canvas = document.createElement("canvas"); canvas.width = F.w; canvas.height = F.h;
@@ -276,13 +280,13 @@
       ctx.fillStyle = C.accent; ctx.fillRect(0, bandY, F.w, bandH);
       ctx.fillStyle = "#ffffff"; ctx.font = `900 ${Math.round(64 * s)}px ${T.display}`; spaced(ctx, 4);
       ctx.fillText(`RECAP ${spec.year || ""}`.trim(), X, bandY + bandH * .7); spaced(ctx, 0);
-      ctx.font = mono(26); ctx.textAlign = "right"; ctx.fillText(String(spec.eyebrow).toUpperCase().slice(0, 28), F.w - X, bandY + bandH * .64); ctx.textAlign = "left";
+      ctx.font = mono(26); ctx.textAlign = "right"; ctx.fillText(up(spec.eyebrow).slice(0, 28), F.w - X, bandY + bandH * .64); ctx.textAlign = "left";
       ctx.fillStyle = "#121019"; [[40, bandY + bandH + 40], [F.w - 40, bandY + bandH + 40], [40, F.h - F.bottom + 10], [F.w - 40, F.h - F.bottom + 10]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 14, 0, Math.PI * 2); ctx.fill(); });
       y = bandY + bandH + 70 * s;
     } else {
       ctx.fillStyle = C.dim; ctx.font = mono(30); spaced(ctx, 6);
-      ctx.fillText(String(spec.eyebrow).toUpperCase(), X, y); spaced(ctx, 0);
-      if (theme === THEMES.topo && spec.period && spec.period !== spec.eyebrow) { ctx.textAlign = "right"; ctx.fillText(String(spec.period).toUpperCase(), F.w - X, y); ctx.textAlign = "left"; }
+      ctx.fillText(up(spec.eyebrow), X, y); spaced(ctx, 0);
+      if (theme === THEMES.topo && spec.period && spec.period !== spec.eyebrow) { ctx.textAlign = "right"; ctx.fillText(up(spec.period), F.w - X, y); ctx.textAlign = "left"; }
       y += 70 * s;
     }
 
@@ -296,7 +300,7 @@
     const drawContent = (ctx, y) => {
       // persona chip
       if (spec.chip) {
-        const label = String(spec.chip).toUpperCase(); ctx.font = mono(28); spaced(ctx, 3);
+        const label = up(spec.chip); ctx.font = mono(28); spaced(ctx, 3);
         const cw = ctx.measureText(label).width + 48 * s, ch = 60 * s;
         if (theme === THEMES.antalya) { ctx.strokeStyle = C.ink; ctx.lineWidth = 3; roundRect(ctx, X, y - ch * .72, cw, ch, ch / 2); ctx.stroke(); ctx.fillStyle = C.ink; }
         else { ctx.fillStyle = theme === THEMES.bib ? C.ink : C.accent; roundRect(ctx, X, y - ch * .72, cw, ch, theme === THEMES.bib ? 0 : 6); ctx.fill(); ctx.fillStyle = C.bg; }
@@ -307,7 +311,7 @@
       if (spec.headline) {
         const size = Math.round((theme === THEMES.bib ? 116 : 84) * s);
         ctx.fillStyle = C.ink; ctx.font = `${theme.weights.display} ${size}px ${T.display}`;
-        const lines = wrap(ctx, theme.upper ? String(spec.headline).toUpperCase() : spec.headline, W, 4);
+        const lines = wrap(ctx, theme.upper ? up(spec.headline) : spec.headline, W, 4);
         lines.forEach(l => { y += size * 1.04; ctx.fillText(l, X, y); });
         y += 50 * s;
       }
@@ -347,13 +351,14 @@
       const cy = F.h - F.bottom - (theme === THEMES.bib ? 70 : 30) * s;
       ctx.strokeStyle = C.track; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X, cy - 150 * s); ctx.lineTo(F.w - X, cy - 150 * s); ctx.stroke();
       ctx.fillStyle = C.ink; ctx.font = `${theme.weights.display} ${Math.round(66 * s)}px ${T.display}`;
-      ctx.fillText(theme.upper ? "WANT YOURS?" : "Want yours?", X, cy - 62 * s);
+      const [ask, free] = spec.cta || ["Want yours?", "free"];
+      ctx.fillText(theme.upper ? up(ask) : ask, X, cy - 62 * s);
       ctx.fillStyle = theme === THEMES.antalya ? C.ink : C.accent; ctx.font = mono(34);
-      ctx.fillText(`${SITE} · free`, X, cy);
+      ctx.fillText(`${SITE} · ${free}`, X, cy);
     }
 
     // footer: the period only; the site address lives on the summary card's invitation
-    const fy = F.h - F.bottom + 40 * s, footLabel = cta ? "" : String(spec.period || "").toUpperCase();
+    const fy = F.h - F.bottom + 40 * s, footLabel = cta ? "" : up(spec.period || "");
     if (theme === THEMES.bib) {
       ctx.strokeStyle = "#cfcfc7"; ctx.lineWidth = 4; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(0, fy - 50 * s); ctx.lineTo(F.w, fy - 50 * s); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = C.dim; ctx.font = mono(28); ctx.fillText(footLabel, X, fy + 10 * s);

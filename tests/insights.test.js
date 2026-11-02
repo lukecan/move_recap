@@ -150,3 +150,20 @@ test("brand-new watch only gets the cards it has data for", () => {
     a3.match(pl.headline, /3 cities across 3 countries/); a3.equal(pl.rows[1][0], "Seoul, South Korea");
   });
 }
+
+{
+  const I4 = require("../src/insights.js"), t4 = require("node:test"), a4 = require("node:assert");
+  t4("Turkish: suffixes follow how the number or name is read, numbers use Turkish separators", () => {
+    a4.deepEqual([62, 40, 30, 93, 100, 6, 10, 41].map(n => I4.suffix(n, "poss")), ["'si", "'ı", "'u", "'ü", "'ü", "'sı", "'u", "'i"]);
+    a4.deepEqual([2026, 2027, 2030, 2023].map(n => I4.suffix(n, "abl")), ["'dan", "'den", "'dan", "'ten"]);
+    a4.deepEqual(["Antalya", "Amsterdam", "Seoul", "Utrecht"].map(w => I4.suffix(w, "loc")), ["'da", "'da", "'da", "'te"]);
+    a4.equal(I4.number(2030653, "tr"), "2.030.653"); a4.equal(I4.date("2026-05-21", "tr"), "21 Mayıs"); a4.equal(I4.date("2026-05-21"), "May 21");
+    const w = I4.when({ lang: "tr", byHour: { 6: 12, 7: 10, 19: 11, 20: 12 }, byWeekday: { Tue: 20, Wed: 15, Sat: 5, Sun: 5 } });
+    a4.match(w.body, /^Antrenmanlarının %\d+'/); a4.match(w.body, /En yoğun saatin \d\d:00\. Favori günün: Salı\./);
+    const c = I4.climb({ lang: "tr", climbMeters: 5446 });
+    a4.equal(c.headline, "Mont Blanc'ı geride bıraktın."); a4.match(c.body, /5\.446 metre tırmandın\. Sıradaki durak: Kilimanjaro, 449 m kaldı\./);
+    a4.equal(I4.climb({ climbMeters: 5446 }).headline, "You climbed higher than Mont Blanc.");   // English untouched
+    const d = I4.deck({ lang: "tr", sweatLiters: 57, climbMeters: 900, byHour: {}, byWeekday: {}, zoneHours: [0, 0, 0, 0, 0] });
+    a4.deepEqual(d.shown.map(x => x.persona).sort(), ["gökdelen tırmanıcısı", "ilginç bilgi"]);
+  });
+}
