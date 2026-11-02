@@ -95,6 +95,7 @@ One-time setup (done in GitHub and cPanel, not in code):
 A raw Garmin export contains your email address, contact details and profile photo. **Never commit an export or real user data to this repo.** `.gitignore` blocks ZIPs and export folders, and every profile and fixture here is invented.
 
 - **No network, enforced.** Every page ships `Content-Security-Policy: connect-src 'none'` (plus `default-src 'none'`, `script-src 'self'`), so the browser itself refuses any request from the page. Anyone can check it in DevTools → Network.
+- **Visit counter.** The start page counts visits with a GoatCounter image pixel sent by our own script (no third-party JS, no cookies; path + referring origin only; skipped on Do Not Track / GPC and off the live site). Only `img-src` allows that one host. Add `?ref=linkedin` (or any name) to links you post so visits from apps that hide the referrer still get attributed.
 - **Build guards.** `npm run build` fails if a page lacks that CSP, contains an inline `<script>`, references a missing file, or loads anything from another host.
 - **Supply chain.** zip.js and fonts are pinned in `package-lock.json` and self-hosted; GitHub Actions are pinned to commit SHAs; Dependabot proposes updates weekly.
 - **Accessibility.** `npm run audit:contrast [export.zip]` measures every text element on every card against WCAG AA (needs Playwright).

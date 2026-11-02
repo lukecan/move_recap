@@ -59,7 +59,7 @@ const T = {
     quick1: "Bilgisayardan <code>connect.garmin.com</code> adresini aç ve <b>Activities → All Activities</b> sayfasına git.",
     quick2: "Sayfayı <b>en alta kadar kaydır</b>, yeni aktivite yüklenmeyene kadar devam et. Garmin sadece ekranda görünen satırları indiriyor; kaydırmazsan elinde 20 aktivite kalır.",
     quick3: "Sağ üstteki <b>Export CSV</b>'ye tıkla ve dosyayı yukarıya bırak. Aktivite kartların hemen hazır olur. Uyku, stres ve kalp kartları için tam export gerekiyor.",
-    f1t: "Verin sende kalır", f1: "Dosya bu sayfanın içinde okunur. Sunucu yok, hesap yok, takip yok.",
+    f1t: "Verin sende kalır", f1: "Dosya bu sayfanın içinde okunur. Sunucu yok, hesap yok, çerez yok.",
     f2t: "Sadece gerekenler", f2: "Aktivite özetlerini, günlük istatistikleri, uykuyu ve fitness yaşını okuruz. Ham GPS dosyalarına dokunmayız.",
     f3t: "İlk gününden itibaren", f3: "Saatini bu yıl mı aldın? Özetin aldığın günden başlar. Değilse bütün takvim yılını kapsar.",
     legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a>',
@@ -88,6 +88,22 @@ applyLang();
 // parsers throw English messages; show them in the page language
 const ERRORS = [[/^Please choose the \.zip/, "errNotZip"], [/^This ZIP doesn't look/, "errNotExport"], [/^This CSV doesn't look/, "errNotCsv"], [/^No activities or daily summaries/, "errNoData"], [/^No activities found in this CSV/, "errEmptyCsv"]];
 const localError = e => { const m = String(e?.message || ""); const hit = ERRORS.find(([re]) => re.test(m)); return hit ? t(hit[1]) : t("statusFailed"); };
+
+/* ---------- anonymous visit count (GoatCounter, no script, no cookies) ----------
+   One image request per page view with: the page path, the site the visitor came from (origin only,
+   or ?ref= / utm_source from our own links) and a cache-buster. Never any file data: file contents
+   can't leave the page because the CSP blocks every connection (connect-src 'none'). Skipped when the
+   browser asks not to be tracked, and everywhere except the live site. */
+(function countVisit() {
+  try {
+    if (location.hostname !== "recap.mertcangenc.com" || navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl) return;
+    const qs = new URLSearchParams(location.search);
+    let ref = qs.get("ref") || qs.get("utm_source") || "";
+    if (!ref && document.referrer) { const o = new URL(document.referrer).origin; if (o !== location.origin) ref = o; }
+    const q = new URLSearchParams({ p: location.pathname, r: ref, rnd: Math.random().toString(36).slice(2) });
+    new Image().src = "https://wellbeing-recap.goatcounter.com/count?" + q.toString();
+  } catch (e) { /* counting is optional */ }
+})();
 
 /* ---------- units ---------- */
 const IMPERIAL_LOCALES = /^(en-US|en-LR|my)(-|$)/i;
