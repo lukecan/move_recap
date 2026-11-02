@@ -207,11 +207,13 @@
     { upTo: 2500,     size: 1200,   name: "the length of Italy",         say: r => `That's ${of(r, "the length of Italy")}.` },
     { upTo: Infinity, size: 2500,   name: "Paris → Moscow",              say: r => `That's ${of(r, "the distance from Paris to Moscow")}.` },
   ];
-  // steps: { total, days, bestDay: { date, steps } }. Distance assumes 0.75 m per step.
+  // steps: { total, days, distanceKm?, bestDay: { date, steps } }.
+  // distanceKm is Garmin's measured daily distance; without it we estimate 0.75 m per step.
   function steps({ steps: s, units }) {
     const trace = [];
     if (!s || s.days < 14) return { id: "steps", skip: true, reason: `Only ${s ? s.days : 0} days of step data; need 2 weeks.` };
-    const avg = s.total / s.days, km = s.total * 0.00075, spike = s.bestDay.steps / avg;
+    const avg = s.total / s.days, km = s.distanceKm ?? s.total * 0.00075, spike = s.bestDay.steps / avg;
+    trace.push(s.distanceKm != null ? "distance: Garmin's measured daily distance" : "distance: estimated at 0.75 m per step");
     const r = rung(DISTANCES, km);
     trace.push(`avg ${num(avg)}/day over ${s.days} days, ≈${num(km)} km, best day ${spike.toFixed(1)}× avg`);
     trace.push(`ladder: ${num(km)} km → ${r.name}`);

@@ -1,0 +1,60 @@
+name: "🐞 Something didn't work"
+description: The page broke, a card looked wrong, or a number seems off.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! **Please don't attach your Garmin export, CSV or screenshots that show personal data.** This page is public. A short description is enough.
+
+        *Türkçe yazabilirsin.*
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+      placeholder: "The sleep card said 2 h a night, but I usually sleep about 7 h."
+    validations:
+      required: true
+  - type: dropdown
+    id: file
+    attributes:
+      label: What did you upload?
+      options:
+        - Full export ZIP
+        - Activities CSV
+        - Nothing, I used the example
+        - The page didn't let me upload
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device and browser
+      options:
+        - iPhone · Safari
+        - iPhone · Chrome or other
+        - Android · Chrome
+        - Android · other
+        - Mac · Safari
+        - Mac or PC · Chrome / Edge
+        - Mac or PC · Firefox
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: lang
+    attributes:
+      label: Page language
+      options: [English, Türkçe]
+  - type: input
+    id: watch
+    attributes:
+      label: Watch model (optional)
+      placeholder: "Forerunner 265"
+  - type: input
+    id: card
+    attributes:
+      label: Which card? (optional)
+      placeholder: "Sleep"

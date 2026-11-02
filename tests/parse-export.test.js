@@ -15,7 +15,7 @@ function fixture({ start = "2026-04-20", days = 40, extraOldDay = null } = {}) {
     acts.push({ activityId: i, activityType: i % 2 ? "lap_swimming" : "running", startTimeLocal: at(d, i % 2 ? 7 : 20),
       duration: 3.6e6, distance: 5e5, waterEstimated: 500, hrTimeInZone_1: 6e5, hrTimeInZone_2: 1.2e6, hrTimeInZone_3: 6e5, hrTimeInZone_4: 0, hrTimeInZone_5: 0,
       vO2MaxValue: 40 + Math.floor(i / 10) });
-    uds.push({ calendarDate: d, totalSteps: 10000 + i, restingHeartRate: 60 - Math.floor(i / 8), floorsAscendedInMeters: 30,
+    uds.push({ calendarDate: d, totalSteps: 10000 + i, totalDistanceMeters: 8000, restingHeartRate: 60 - Math.floor(i / 8), floorsAscendedInMeters: 30,
       wellnessStartTimeLocal: `${d}T00:00:00.0`, wellnessStartTimeGmt: `${isoAdd(d, -1)}T21:00:00.0`,
       allDayStress: { aggregatorList: [{ type: "TOTAL", averageStressLevel: 25 }] } });
     sleep.push({ calendarDate: d, sleepStartTimestampGMT: `${isoAdd(d, -1)}T20:30:00.0`, sleepEndTimestampGMT: `${d}T03:40:00.0`,
@@ -89,4 +89,12 @@ test("activity types map to families", () => {
   assert.equal(PE.family("hiking"), "walking & hiking");
   assert.equal(PE.family("breathwork"), "mind & body");
   assert.equal(PE.family("tennis"), "other");
+});
+
+test("steps distance uses Garmin's measured daily distance", () => {
+  const s = PE.computeStats(fixture());
+  assert.equal(s.steps.distanceKm, 40 * 8);
+  const I = require("../src/insights.js");
+  assert.match(I.steps(s).body, /about 320 km/);
+  assert.ok(I.steps(s).trace.some(x => /measured/.test(x)));
 });
