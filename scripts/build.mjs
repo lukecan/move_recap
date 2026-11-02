@@ -1,6 +1,6 @@
 // Builds the public site into dist/ for recap.mertcangenc.com.
 //   - copies app/ (the site root) and src/ (as js/)
-//   - self-hosts zip.js and the three font families, so the page makes
+//   - self-hosts zip.js and the font families, so the page makes
 //     no third-party requests at all ("no tracking" stays literally true)
 //   - adds link-preview meta tags, licenses.txt and the CNAME file
 //   - fails if a page lacks the no-network CSP, has inline scripts or loads
@@ -20,7 +20,12 @@ mkdirSync(join(DIST, "vendor"), { recursive: true });
 mkdirSync(join(DIST, "fonts"), { recursive: true });
 
 /* fonts: latin + latin-ext faces, unicode-range kept from fontsource's CSS */
-const FONTS = { unbounded: [500, 700, 900], "familjen-grotesk": [400, 500, 600], "jetbrains-mono": [400, 600] };
+// Antalya theme (also the site UI), then Race Bib and Topo for share images. Browsers only download a face when it's used.
+const FONTS = {
+  unbounded: [500, 700, 900], "familjen-grotesk": [400, 500, 600], "jetbrains-mono": [400, 600],
+  "big-shoulders-display": [700, 900], barlow: [400, 600], "ibm-plex-mono": [400, 600],
+  "zilla-slab": [500, 700], "work-sans": [400, 600], "space-mono": [400, 700],
+};
 let css = "/* Self-hosted from @fontsource (SIL Open Font License) */\n";
 for (const [fam, weights] of Object.entries(FONTS)) {
   for (const w of weights) for (const subset of ["latin-ext", "latin"]) {
@@ -34,7 +39,7 @@ writeFileSync(join(DIST, "fonts", "fonts.css"), css);
 
 /* scripts */
 cpSync(nm("@zip.js/zip.js/dist/zip.min.js"), join(DIST, "vendor", "zip.min.js"));
-for (const f of ["insights.js", "parse-export.js", "parse-csv.js"]) cpSync(join(ROOT, "src", f), join(DIST, "js", f));
+for (const f of ["insights.js", "parse-export.js", "parse-csv.js", "share.js"]) cpSync(join(ROOT, "src", f), join(DIST, "js", f));
 
 /* pages */
 const META = `

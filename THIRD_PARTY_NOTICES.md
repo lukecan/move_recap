@@ -8,5 +8,11 @@ The published site bundles the following third-party software and fonts. Their f
 | Unbounded (font) | via @fontsource/unbounded 5.3.0 | SIL Open Font License 1.1, © 2022 The Unbounded Project Authors | https://github.com/googlefonts/unbounded |
 | Familjen Grotesk (font) | via @fontsource/familjen-grotesk 5.3.0 | SIL Open Font License 1.1, © 2021 The Familjen Grotesk Project Authors | https://github.com/Familjen-Sthlm/Familjen-Grotesk |
 | JetBrains Mono (font) | via @fontsource/jetbrains-mono 5.3.0 | SIL Open Font License 1.1, © 2020 The JetBrains Mono Project Authors | https://github.com/JetBrains/JetBrainsMono |
+| Big Shoulders Display (font) | via @fontsource/big-shoulders-display 5.3.0 | SIL Open Font License 1.1 | https://github.com/xotypeco/big_shoulders |
+| Barlow (font) | via @fontsource/barlow 5.3.0 | SIL Open Font License 1.1 | https://github.com/jpt/barlow |
+| IBM Plex Mono (font) | via @fontsource/ibm-plex-mono 5.3.0 | SIL Open Font License 1.1 | https://github.com/IBM/plex |
+| Zilla Slab (font) | via @fontsource/zilla-slab 5.3.0 | SIL Open Font License 1.1 | https://github.com/mozilla/zilla-slab |
+| Work Sans (font) | via @fontsource/work-sans 5.3.0 | SIL Open Font License 1.1 | https://github.com/weiweihuanghuang/Work-Sans |
+| Space Mono (font) | via @fontsource/space-mono 5.3.0 | SIL Open Font License 1.1 | https://github.com/googlefonts/spacemono |
 
 Garmin and Garmin Connect are trademarks of Garmin Ltd. or its subsidiaries. This project is not affiliated with or endorsed by Garmin.

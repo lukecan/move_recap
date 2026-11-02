@@ -53,6 +53,18 @@ Open `demo/insights.html` to see five invented profiles side by side. No real us
 node --test tests/*.test.js
 ```
 
+## Share images
+
+Every card has a **Share ↗** button, and the last card shares the whole recap. `src/share.js` draws the card on a `<canvas>` (DOM-to-image tricks break on Safari, where most Instagram stories are made), so it works offline and under the no-network CSP.
+
+| Option | Choices |
+|---|---|
+| What | This card · All cards |
+| Theme | Antalya (colour fields) · Race Bib (white bib, red band, timing strip) · Topo (trail map, contour lines) |
+| Size | Story 9:16, 1080×1920 (Instagram, WhatsApp; text kept clear of Instagram's top and bottom UI) · Post 4:5, 1080×1350 (Strava, LinkedIn, Instagram feed) |
+
+Images are rendered before the tap, so the phone's own share sheet opens straight to Instagram, WhatsApp or Strava; desktops get downloads. "Copy caption" adds a ready-made post text. The chosen theme is remembered.
+
 ## Data pipeline
 
 `scripts/summarize_export.py` reads an unzipped Garmin export and prints the recap stats as JSON:
