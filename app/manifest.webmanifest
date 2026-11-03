@@ -1,6 +1,6 @@
 {
-  "name": "Wellbeing Recap",
-  "short_name": "Recap",
+  "name": "Move Recap",
+  "short_name": "Move Recap",
   "description": "Your year in sport, free. Drop in your Garmin export and get a Wrapped-style recap, processed on your device.",
   "start_url": "./",
   "scope": "./",

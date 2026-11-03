@@ -1,5 +1,5 @@
 /*
- * Wellbeing Recap: workout start coordinates → city and country, offline.
+ * Move Recap: workout start coordinates → city and country, offline.
  *
  * The city list (GeoNames via all-the-cities, CC BY 4.0) is built into js/cities.js and only loaded
  * when a full export is opened. Nothing is looked up online: coordinates never leave the page.

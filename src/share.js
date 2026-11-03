@@ -1,5 +1,5 @@
 /*
- * Wellbeing Recap: share images.
+ * Move Recap: share images.
  *
  * Draws one recap card onto a <canvas> so people can post it. Canvas is used
  * instead of screenshotting the DOM because DOM-to-image tricks break on
@@ -23,8 +23,7 @@
   const SITE = "recap.mertcangenc.com";
   // uppercase in the card's language (Turkish i → İ)
   let UP = "en";
-  // the brand stays English in every language (WELLBEING, not WELLBEİNG)
-  const up = s => String(s).toLocaleUpperCase(UP).replace(/WELLBEİNG/g, "WELLBEING");
+  const up = s => String(s).toLocaleUpperCase(UP);
   const FORMATS = {
     story: { w: 1080, h: 1920, top: 250, bottom: 330, scale: 1 },
     post: { w: 1080, h: 1350, top: 110, bottom: 120, scale: 0.84 },

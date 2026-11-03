@@ -57,7 +57,7 @@ const META = `
 <meta name="theme-color" content="#14112a">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${SITE}/">
-<meta property="og:title" content="Wellbeing Recap: your year in sport, free">
+<meta property="og:title" content="Move Recap: your year in sport, free">
 <meta property="og:description" content="Drop in your Garmin export, get your year as a story. No subscription. Your data never leaves your browser.">
 <meta property="og:image" content="${SITE}/og.png">
 <meta property="og:image:width" content="1200">
@@ -66,7 +66,7 @@ const META = `
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="apple-mobile-web-app-title" content="Recap">`;
+<meta name="apple-mobile-web-app-title" content="Move Recap">`;
 
 // Every page must: carry the no-network CSP, have no inline <script>, load nothing from other hosts.
 const CSP_RE = /<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'none'[^"]*">/;
@@ -90,7 +90,7 @@ for (const page of readdirSync(join(ROOT, "app")).filter(f => f.endsWith(".html"
 for (const f of readdirSync(join(ROOT, "app")).filter(f => /\.(js|png|svg|webmanifest)$/.test(f))) cpSync(join(ROOT, "app", f), join(DIST, f));
 
 /* licenses: ours plus the full text of everything we ship */
-const lic = [["Wellbeing Recap", join(ROOT, "LICENSE")], ["zip.js", nm("@zip.js/zip.js/LICENSE")], ["all-the-cities (code)", nm("all-the-cities/LICENSE")],
+const lic = [["Move Recap", join(ROOT, "LICENSE")], ["zip.js", nm("@zip.js/zip.js/LICENSE")], ["all-the-cities (code)", nm("all-the-cities/LICENSE")],
   ...Object.keys(FONTS).map(f => [`Font: ${f}`, nm(`@fontsource/${f}/LICENSE`)])];
 writeFileSync(join(DIST, "licenses.txt"), lic.map(([n, f]) => `==== ${n} ====\n\n${readFileSync(f, "utf8").trim()}\n`).join("\n")
   + "\n==== City data ====\n\nCity names, countries, coordinates and populations: GeoNames (https://www.geonames.org), licensed under\nCreative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/). Filtered to cities of 100,000+ people,\ncapitals and province seats; coordinates rounded to two decimals.\n");
