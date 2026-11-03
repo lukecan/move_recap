@@ -1,4 +1,4 @@
-# Wellbeing Recap
+# Move Recap
 
 Your year in sport and wellbeing, Wrapped-style: story cards built from your own fitness-watch data.
 

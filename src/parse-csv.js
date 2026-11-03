@@ -1,5 +1,5 @@
 /*
- * Wellbeing Recap: Garmin Connect "Export CSV" (Activities list) → stats.
+ * Move Recap: Garmin Connect "Export CSV" (Activities list) → stats.
  *
  * The quick path. It only knows about activities, so the deck gets the
  * intro, totals, when-you-move and climbing cards; sleep, stress, steps,

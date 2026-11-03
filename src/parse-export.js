@@ -1,5 +1,5 @@
 /*
- * Wellbeing Recap: Garmin export → stats for the insight engine.
+ * Move Recap: Garmin export → stats for the insight engine.
  *
  * computeStats(files) takes a Map of { path → parsed JSON } holding only the
  * files `isWanted(path)` accepted, and returns the stats object that

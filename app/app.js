@@ -57,9 +57,9 @@ const T = {
     errNoData: "No activities or daily summaries found. Is this a Garmin Connect data export?",
     errEmptyCsv: "No activities found in this CSV.",
     statusUnits: "One question before your quick recap: which units does your Garmin use?",
-    calTitle: "Garmin export ready? Open your Wellbeing Recap",
+    calTitle: "Garmin export ready? Open your Move Recap",
     calBody: "Check your email for Garmin's download link, then drop the ZIP at https://recap.mertcangenc.com",
-    calFile: "wellbeing-recap-reminder.ics",
+    calFile: "move-recap-reminder.ics",
   },
   tr: {
     h1: "Sporla geçen yılın. <em>Ücretsiz.</em> Abonelik yok.",
@@ -74,9 +74,9 @@ const T = {
     pv3: '<i>Tırmanış</i><b class="pv-big">14 km</b><b>uçaktan daha yükseğe</b>',
     remindText: "Talep ettin mi? 2 gün sonrası için hatırlatıcı ekle:", remindGoogle: "Google Takvim", remindApple: "Apple Takvim",
     statusUnits: "Hızlı özetinden önce tek bir soru: Garmin'in hangi birimleri kullanıyor?",
-    calTitle: "Garmin export'un hazır mı? Wellbeing Recap'ini aç",
+    calTitle: "Garmin export'un hazır mı? Move Recap'ini aç",
     calBody: "Garmin'in indirme bağlantısı için e-postana bak, sonra ZIP'i https://recap.mertcangenc.com adresine bırak.",
-    calFile: "wellbeing-recap-hatirlatici.ics",
+    calFile: "move-recap-hatirlatici.ics",
     pill: "Tarayıcında çalışır · hiçbir verin internete yüklenmez",
     dropTitle: "Garmin export ZIP'ini ya da aktivite CSV'ni buraya bırak",
     dropSub: "ya da dosyayı seçmek için dokun",
@@ -92,7 +92,7 @@ const T = {
     f1t: "Verin sende kalır", f1: "Dosya bu sayfanın içinde okunur. Sunucu yok, hesap yok, çerez yok.",
     f2t: "Sadece gerekenler", f2: "Yalnızca aktivite özetlerini, günlük istatistikleri, uykuyu ve fitness yaşını okur.",
     f3t: "İlk gününden itibaren", f3: "Saatini bu yıl mı aldın? Özetin aldığın günden başlar. Değilse bütün takvim yılını kapsar.",
-    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/wellbeing_recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a>',
+    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/move-recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/move-recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a> · <a href="https://github.com/sponsors/lukecan" target="_blank" rel="noopener">Bir kahve ısmarla ☕</a>',
     statusOpening: "Dosyan açılıyor…", statusReading: (i, n, f) => `Okunuyor (${i}/${n}): ${f}`, statusFailed: "Dosya okunurken bir sorun çıktı.",
     errNotZip: "Lütfen Garmin'in e-postasındaki .zip dosyasını (açmadan) ya da aktivite listesinin .csv dosyasını seç.",
     errNotExport: "Bu ZIP bir Garmin Connect export'una benzemiyor. “Request Data Export” sonrası Garmin'in e-postayla gönderdiği dosyayı kullan.",
@@ -233,7 +233,7 @@ function setCalendarLink() {
 }
 $("#ical").addEventListener("click", () => {
   const r = reminderTimes(), esc = s => s.replace(/[\\;,]/g, m => "\\" + m);
-  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Wellbeing Recap//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Move Recap//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
     "BEGIN:VEVENT", `UID:${Date.now()}@recap.mertcangenc.com`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,
     `DTSTART:${r.s}`, `DTEND:${r.e}`, `SUMMARY:${esc(t("calTitle"))}`, `DESCRIPTION:${esc(t("calBody"))}`, "URL:https://recap.mertcangenc.com",
     "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${esc(t("calTitle"))}`, "TRIGGER:PT0M", "END:VALARM",
@@ -313,7 +313,7 @@ function moreCard(s) {
 function summaryText(s, shown) {
   const t = s.totals, fams = Object.entries(t.families).sort((a, b) => b[1].km - a[1].km);
   const personas = identity(shown).map(c => c.persona);
-  return [`Wellbeing Recap · ${periodLabel(s.period)}${s.name ? " · " + s.name : ""}`, L(`${num(t.activities)} activities · ${num(t.activeDays)} active days`, `${num(t.activities)} aktivite · ${num(t.activeDays)} aktif gün`),
+  return [`Move Recap · ${periodLabel(s.period)}${s.name ? " · " + s.name : ""}`, L(`${num(t.activities)} activities · ${num(t.activeDays)} active days`, `${num(t.activities)} aktivite · ${num(t.activeDays)} aktif gün`),
     fams.filter(([, v]) => v.km >= 1).slice(0, 2).map(([f, v]) => `${dist(v.km, s.units)} ${fam(f)}`).join(" · "),
     personas.length ? `${L("My types", "Tiplerim")}: ${personas.join(" · ")}` : ""].filter(Boolean).join("\n");
 }
@@ -325,7 +325,8 @@ function endCard(s, shown, extraCount = 0) {
     <div class="summary">${tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
     <button class="share" id="shareAll" type="button">${L("Share my recap ↗", "Özetimi paylaş ↗")}</button>
     ${extraCount ? `<button class="more-cards" id="moreCards" type="button">${L(`${extraCount} more ${extraCount === 1 ? "card" : "cards"} →`, `${extraCount} kart daha →`)}</button>` : ""}
-    <a class="fb" href="https://github.com/lukecan/wellbeing_recap/issues/new/choose" target="_blank" rel="noopener">${L("Tell us what you think →", "Ne düşündüğünü bize yaz →")}</a>
+    <a class="fb" href="https://github.com/lukecan/move-recap/issues/new/choose" target="_blank" rel="noopener">${L("Tell us what you think →", "Ne düşündüğünü bize yaz →")}</a>
+    <a class="fb" href="https://github.com/sponsors/lukecan" target="_blank" rel="noopener">${L("Enjoyed it? Buy me a coffee ☕", "Beğendin mi? Bana bir kahve ısmarla ☕")}</a>
     <div class="foot">${L("Your data never left this page", "Verilerin bu sayfadan hiç çıkmadı")}</div>`];
 }
 
@@ -347,7 +348,7 @@ function shareSpecs(s, shown, extra = []) {
       : c.ladder ? { type: "ladder", ...c.ladder } : c.rows ? { type: "rows", rows: c.rows }
       : c.tiles ? { type: "tiles", tiles: c.tiles } : null });
   const label = periodLabel(s.period);
-  const end = { ...base, id: "end", eyebrow: s.name ? `${s.name} · Wellbeing Recap` : "Wellbeing Recap",
+  const end = { ...base, id: "end", eyebrow: s.name ? `${s.name} · Move Recap` : "Move Recap",
     headline: L(`${s.name ? s.name + "'s" : "My"} ${s.period.mode === "year" ? label : "recap"}`, s.period.mode === "year" ? label : `${s.name ? s.name + ", " : ""}${lower(label)}`),
     cta: [L("Want yours?", "Sen de ister misin?"), L("free", "ücretsiz")], viz: { type: "tiles", tiles: plainTiles(s, shown) } };
   return [intro, totals, ...shown.map(insight), ...(s.source === "csv" ? [null] : []), end, ...extra.map(insight)];
@@ -409,8 +410,8 @@ function togglePause(force) { const want = force ?? !paused; if (want === paused
 const sheetState = { personal: "out", scope: "card", theme: (() => { try { return localStorage.getItem("wr-theme") || "antalya"; } catch { return "antalya"; } })(), format: "story" };
 let prepared = { key: "", files: [] }, previewUrl = "", galleryUrls = [], wasPaused = false, lastFocus = null, prepToken = 0;
 function clearGallery() { galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = []; $("#sheetGallery").replaceChildren(); }
-const caption = () => `${summary}\n\n${L("Made free at recap.mertcangenc.com", "recap.mertcangenc.com'da ücretsiz hazırlandı")} #WellbeingRecap`;
-const fileName = (sp, i) => `wellbeing-recap-${String(i + 1).padStart(2, "0")}-${sp.id}-${sheetState.theme}-${sheetState.format}.png`;
+const caption = () => `${summary}\n\n${L("Made free at recap.mertcangenc.com", "recap.mertcangenc.com'da ücretsiz hazırlandı")} #MoveRecap`;
+const fileName = (sp, i) => `move-recap-${String(i + 1).padStart(2, "0")}-${sp.id}-${sheetState.theme}-${sheetState.format}.png`;
 function syncChips() {
   document.querySelectorAll("#sheet .chips").forEach(g => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === sheetState[g.dataset.opt])));
   const canShareFiles = !!(navigator.canShare && navigator.share);

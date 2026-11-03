@@ -1,5 +1,5 @@
 {
-  "name": "wellbeing-recap",
+  "name": "move-recap",
   "version": "0.1.0",
   "private": true,
   "description": "Your year in sport, free. A Wrapped-style recap from your Garmin export, processed in the browser.",

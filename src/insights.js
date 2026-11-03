@@ -1,5 +1,5 @@
 /*
- * Wellbeing Recap: insight engine.
+ * Move Recap: insight engine.
  *
  * Each card is a pure function: stats in, insight out.
  *   { id, skip, reason?, score, persona, headline, body, facts[], trace[] }
