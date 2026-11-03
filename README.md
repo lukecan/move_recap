@@ -18,36 +18,33 @@ Your year in sport and wellbeing, Wrapped-style: story cards built from your own
 
 ## Cards
 
+A story of at most **12 cards**: intro, totals, the nine most interesting insight cards for this person, and the summary. Any other cards that had something to say wait behind "N more cards" on the summary. Every card is skipped when there isn't enough data to say something honest.
+
 | Card | What it shows |
 |---|---|
-| Intro | Date range covered by the export |
-| Total | Activities, active days, longest streak, hours, calories |
-| Sports | Breakdown by sport, with distance |
-| When | 24-hour clock of activity start times, favourite weekday |
-| Months | Activities per month |
-| Records | Personal records set in the recap period |
-| Pace | 5K race-time prediction, first month vs last |
-| Body | Before/after: resting heart rate, VO2 Max, fitness age |
-| Steps | Total and monthly steps, best day |
-| Sleep | Average duration and score, typical bed and wake time |
-| Summary | Shareable recap, copy to clipboard |
+| Intro | Period ("2026 Recap", or "Since April 2026" for a new watch) and date range |
+| In total | Activities, active days, longest streak, hours, sports, calories (with a pizza-slice comparison) |
+| When you move · Heart-rate DNA · Your stress week | When you train, how hard, which weekday stresses you most |
+| Your rhythm | Running cadence matched to one of three songs at that exact tempo (185 songs, 140–200 BPM) |
+| Power | Work done (kJ) with a phone / kettle / electric-car comparison; cycling first, running power otherwise |
+| Swimming | Strokes and distance, compared with Alcatraz, Gibraltar and the English Channel |
+| Strength | Sessions, time, different moves, go-to move and body areas |
+| Mind & body | Yoga, breathwork and meditation minutes, slowest breathing, stress drop per session |
+| Steps · Sleep · Your body · Sweat | Steps with a distance ladder, sleep habits, improved fitness markers, sweat |
+| Climbing | A ladder of famous heights (Statue of Liberty → … → Everest → cruising altitude → edge of space) |
+| Your shoes · Weather | Distance on your shoes vs the limit set in Gear; hottest and coldest workout |
+| Records · Places | Personal records set this period; cities and countries trained in. **Private by default in shares.** |
+| Summary | Tiles, share button, feedback link |
 
 ## Insight engine
 
-`src/insights.js` turns stats into card copy. Each card has rule paths that pick a persona from the user's numbers, a 0–1 interest score that orders the deck, and a skip rule when there isn't enough data. Every insight carries a trace of the rule that fired.
+`src/insights.js` turns stats into card copy. Each card has rule paths that pick a persona from the user's numbers, a 0–1 interest score that orders the deck, and a skip rule when there isn't enough data. Every insight carries a trace of the rule that fired. **Worse body metrics are never shown; if nothing improved, that card is skipped.**
 
-| Card | Personas |
-|---|---|
-| When you move | early bird · lunch-break athlete · afternoon athlete · evening athlete · night owl · double shift · weekend warrior · anytime athlete |
-| Heart-rate DNA | polarized · base builder · tempo lover · intensity junkie · all-rounder |
-| Your stress week | monday blues · midweek pressure · friday crunch · busy weekender · steady |
-| Steps | step machine · 10k club · steady walker · every step counts (+ distance ladder: marathon → London–Paris → Lisbon–Madrid → length of Italy → Paris–Moscow) |
-| Sleep | sleep champion · well rested · almost there · short sleeper (+ late-sleeper line) |
-| Your body | upgraded · on the way up. **Worse metrics are never shown; if nothing improved, the card is skipped.** |
-| Sweat | fun fact (ladder: bottles → water-cooler jugs → bathtubs → hot tubs) |
-| Climbing | fun fact (ladder: Eiffel Tower → Burj Khalifa → % of Everest → Everests) |
+**Languages.** Cards, share sheet, captions and share images speak English or Turkish (the page's language when the story opens). Copy is written as `t(english, turkish)` pairs; Turkish numbers, dates, 24-hour times and suffixes are worked out in code (%62'si, %40'ı, 2026'dan, Antalya'da).
 
-Open `demo/insights.html` to see five invented profiles side by side. No real user data lives in this repository. Run the tests with:
+**Places, offline.** `src/geo.js` maps each workout's start coordinates to the most populous city within 25 km (districts roll up into their city) using a GeoNames list built into `js/cities.js` and loaded only for full exports. Nothing is looked up online.
+
+Open `demo/insights.html` to see invented profiles side by side. No real user data lives in this repository. Run the tests with:
 
 ```bash
 node --test tests/*.test.js
@@ -59,11 +56,11 @@ Every card has a **Share ↗** button, and the last card shares the whole recap.
 
 | Option | Choices |
 |---|---|
-| What | This card · All cards |
+| What | This card · All cards (shown as a swipeable gallery; Records & Places only if you choose "Include") |
 | Theme | Antalya (colour fields) · Race Bib (white bib, red band, timing strip) · Topo (trail map, contour lines) |
 | Size | Story 9:16, 1080×1920 (Instagram, WhatsApp; text kept clear of Instagram's top and bottom UI) · Post 4:5, 1080×1350 (Strava, LinkedIn, Instagram feed) |
 
-Images are rendered before the tap, so the phone's own share sheet opens straight to Instagram, WhatsApp or Strava; desktops get downloads. "Copy caption" adds a ready-made post text. The chosen theme is remembered.
+The Antalya theme draws a quiet sea-and-sun pattern seeded from the year's numbers, so every person's images differ (Topo contours are seeded the same way). Images are rendered before the tap, so the phone's own share sheet opens straight to Instagram, WhatsApp or Strava; desktops get downloads. "Copy caption" adds a ready-made post text. The chosen theme is remembered.
 
 ## Data pipeline
 
@@ -103,10 +100,11 @@ A raw Garmin export contains your email address, contact details and profile pho
 
 ## Roadmap
 
-- [x] Parse the export ZIP in the browser, port `summarize_export.py` to JS (`src/parse-export.js`)
-- [x] Generate cards from parsed data instead of hard-coded numbers
-- [x] Activities CSV as an instant quick recap (`src/parse-csv.js`); flags CSVs cut off at Garmin's 20-row page
-- [ ] Export a card as an image for Instagram stories / LinkedIn
-- [x] Period: "Since <month>" when the watch is new this year, otherwise the calendar year
-- [ ] Turkish and English copy
+- [x] Parse the export ZIP in the browser (`src/parse-export.js`); Activities CSV as an instant quick recap (`src/parse-csv.js`)
+- [x] Cards generated from parsed data; period "Since <month>" for a new watch, otherwise the calendar year
+- [x] Share images for Instagram stories, Strava and LinkedIn, in three themes
+- [x] Turkish and English
+- [x] Installable on the home screen (web manifest, app icons)
 - [x] Deploy to recap.mertcangenc.com (GitHub Pages)
+- [ ] Test group: a cyclist with a power meter, weighted strength training, outdoor runs with temperature
+- [ ] Support link (GitHub Sponsors)
