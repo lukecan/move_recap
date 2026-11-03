@@ -23,7 +23,8 @@
   const SITE = "recap.mertcangenc.com";
   // uppercase in the card's language (Turkish i → İ)
   let UP = "en";
-  const up = s => String(s).toLocaleUpperCase(UP);
+  // the brand stays English in every language (WELLBEING, not WELLBEİNG)
+  const up = s => String(s).toLocaleUpperCase(UP).replace(/WELLBEİNG/g, "WELLBEING");
   const FORMATS = {
     story: { w: 1080, h: 1920, top: 250, bottom: 330, scale: 1 },
     post: { w: 1080, h: 1350, top: 110, bottom: 120, scale: 0.84 },

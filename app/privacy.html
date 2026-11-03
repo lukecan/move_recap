@@ -36,13 +36,16 @@ main > div[data-block] { display: flex; flex-direction: column; gap: 22px; }
 </head>
 <body>
 <main>
-  <div class="topbar"><a class="brand" href="./">← Wellbeing Recap</a><div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div></div>
+  <div class="topbar"><a class="brand" lang="en" href="./">← Wellbeing Recap</a><div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div></div>
   <div data-block="en">
   <h1>Privacy</h1>
   <p class="tldr"><strong>Short version:</strong> your file is read inside your browser and never sent anywhere. There's no account, no server that sees your data and no cookies. We only count visits, anonymously.</p>
 
   <h2>What happens to your file</h2>
   <p>When you drop in your Garmin export ZIP or Activities CSV, this page opens it on your own device. It reads only what the recap needs: activity summaries, daily stats, sleep and fitness age. Raw GPS files inside the ZIP are skipped. The numbers stay in your browser's memory and are gone when you close or reload the tab.</p>
+
+  <h2>How we find your cities</h2>
+  <p>The Places card needs to know which city each workout started in. Garmin's summary includes the start point's coordinates, and the page matches them against a list of the world's larger cities that ships with the site (from GeoNames, loaded only when you open a full export). The lookup happens on your device: your coordinates are never sent anywhere. Records and Places are also left out of "All cards" shares unless you choose to include them.</p>
 
   <h2>What we don't do</h2>
   <ul>
@@ -58,7 +61,7 @@ main > div[data-block] { display: flex; flex-direction: column; gap: 22px; }
   <p>To know whether anyone uses this, the start page counts visits with <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a>, an open-source counter that uses no cookies and doesn't identify people. One tiny image request per visit sends the page address and the site you came from (for example LinkedIn). It never includes anything from your file. If your browser sends "Do Not Track" or "Global Privacy Control", nothing is counted.</p>
 
   <h2>What your browser keeps</h2>
-  <p>Only your units (metric or imperial) and language choices, saved in your browser's local storage so you don't have to pick it again. You can clear it with your browser's site data settings.</p>
+  <p>Only your units (metric or imperial), language and share theme, saved in your browser's local storage so you don't have to pick them again. You can clear it with your browser's site data settings.</p>
 
   <h2>Hosting</h2>
   <p>The site is hosted on GitHub Pages. Like any web host, GitHub may log basic request data (such as IP addresses) to run and secure the service. That never includes your file. See GitHub's privacy statement for details.</p>
@@ -77,6 +80,9 @@ main > div[data-block] { display: flex; flex-direction: column; gap: 22px; }
   <h2>Dosyana ne oluyor?</h2>
   <p>Garmin export ZIP'ini ya da aktivite CSV'ni bıraktığında bu sayfa onu kendi cihazında açar. Sadece özetin ihtiyaç duyduğu kısımları okur: aktivite özetleri, günlük istatistikler, uyku ve fitness yaşı. ZIP'in içindeki ham GPS dosyalarına dokunmaz. Rakamlar tarayıcının belleğinde durur ve sekmeyi kapattığında ya da sayfayı yenilediğinde silinir.</p>
 
+  <h2>Şehirlerini nasıl buluyoruz?</h2>
+  <p>Yerler kartı, her antrenmanın hangi şehirde başladığını bilmek ister. Garmin özetinde başlangıç noktasının koordinatları var; sayfa bunları sitenin içinde gelen bir büyük şehirler listesiyle eşleştirir (GeoNames verisi, sadece tam export açıldığında yüklenir). Eşleştirme cihazında yapılır: koordinatların hiçbir yere gönderilmez. Rekorlar ve yerler, sen eklemeyi seçmedikçe "Tüm kartlar" paylaşımına da girmez.</p>
+
   <h2>Neleri yapmıyoruz?</h2>
   <ul>
     <li><strong>Yükleme yok.</strong> Verini alan bir sunucu yok.</li>
@@ -91,7 +97,7 @@ main > div[data-block] { display: flex; flex-direction: column; gap: 22px; }
   <p>Bu siteyi kullanan biri var mı diye bilmek için başlangıç sayfası ziyaretleri <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a> ile sayıyor: çerez kullanmayan, kişileri tanımayan açık kaynaklı bir sayaç. Her ziyarette tek bir küçük görsel isteği, sayfa adresini ve hangi siteden geldiğini (örneğin LinkedIn) gönderir. Dosyandan hiçbir şey içermez. Tarayıcın "Do Not Track" ya da "Global Privacy Control" sinyali gönderiyorsa hiçbir şey sayılmaz.</p>
 
   <h2>Tarayıcının sakladıkları</h2>
-  <p>Sadece birim (metrik ya da emperyal) ve dil tercihin. Bir dahaki gelişinde yeniden seçmemen için tarayıcının yerel depolamasında tutulur. Tarayıcının site verisi ayarlarından silebilirsin.</p>
+  <p>Sadece birim (metrik ya da emperyal), dil ve paylaşım teması tercihin. Bir dahaki gelişinde yeniden seçmemen için tarayıcının yerel depolamasında tutulur. Tarayıcının site verisi ayarlarından silebilirsin.</p>
 
   <h2>Barındırma</h2>
   <p>Site GitHub Pages üzerinde çalışıyor. Her web sunucusu gibi GitHub da hizmeti işletmek ve güvenliğini sağlamak için IP adresi gibi temel istek bilgilerini kaydedebilir. Bu kayıtlar dosyanı asla içermez. Ayrıntılar için GitHub'ın gizlilik bildirimine bakabilirsin.</p>

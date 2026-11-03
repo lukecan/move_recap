@@ -63,7 +63,10 @@ const META = `
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">`;
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Recap">`;
 
 // Every page must: carry the no-network CSP, have no inline <script>, load nothing from other hosts.
 const CSP_RE = /<meta http-equiv="Content-Security-Policy" content="[^"]*connect-src 'none'[^"]*">/;
@@ -84,7 +87,7 @@ for (const page of readdirSync(join(ROOT, "app")).filter(f => f.endsWith(".html"
   if (problems.length) throw new Error(`${page}: ${problems.join("; ")}`);
   writeFileSync(join(DIST, page), html);
 }
-for (const f of readdirSync(join(ROOT, "app")).filter(f => /\.(js|png|svg)$/.test(f))) cpSync(join(ROOT, "app", f), join(DIST, f));
+for (const f of readdirSync(join(ROOT, "app")).filter(f => /\.(js|png|svg|webmanifest)$/.test(f))) cpSync(join(ROOT, "app", f), join(DIST, f));
 
 /* licenses: ours plus the full text of everything we ship */
 const lic = [["Wellbeing Recap", join(ROOT, "LICENSE")], ["zip.js", nm("@zip.js/zip.js/LICENSE")], ["all-the-cities (code)", nm("all-the-cities/LICENSE")],

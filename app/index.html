@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://wellbeing-recap.goatcounter.com; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://wellbeing-recap.goatcounter.com; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wellbeing Recap</title>
 <link rel="stylesheet" href="fonts/fonts.css">
@@ -218,7 +218,7 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
 </head>
 <body>
 <main class="landing" id="landing">
-  <div class="topbar"><span class="brand">Wellbeing Recap</span>
+  <div class="topbar"><span class="brand" lang="en">Wellbeing Recap</span>
     <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="tr">TR</button></div></div>
   <div class="hero-row">
   <section class="pitch">
@@ -226,9 +226,9 @@ svg text { font-family: var(--f-data); font-size: 10px; fill: var(--dim); }
     <p data-i18n="lede">Drop in your Garmin data export and get your year as a story: when you move, how your heart changed, how you slept, what kind of athlete you are.</p>
   </section>
   <button class="preview" id="preview" type="button" data-i18n-label="previewLabel" aria-label="See an example recap">
-    <span class="pv pv1"><i>In total</i><b class="pv-big">96</b><i>activities</i></span>
-    <span class="pv pv2"><i>When you move</i><em>weekend warrior</em><b>Weekdays are for work. Weekends are for you.</b></span>
-    <span class="pv pv3"><i>Climbing</i><b class="pv-big">1.6×</b><b>Everest</b></span>
+    <span class="pv pv1" data-i18n="pv1"><i>In total</i><b class="pv-big">110</b><i>activities</i></span>
+    <span class="pv pv2" data-i18n="pv2"><i>When you move</i><em>weekend warrior</em><b>Weekdays are for work. Weekends are for you.</b></span>
+    <span class="pv pv3" data-i18n="pv3"><i>Climbing</i><b class="pv-big">14 km</b><b>higher than a plane flies</b></span>
     <span class="pv-tag" data-i18n="previewTag">Example · tap to play</span>
   </button>
   </div>
