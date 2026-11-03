@@ -92,7 +92,7 @@ const T = {
     f1t: "Verin sende kalır", f1: "Dosya bu sayfanın içinde okunur. Sunucu yok, hesap yok, çerez yok.",
     f2t: "Sadece gerekenler", f2: "Yalnızca aktivite özetlerini, günlük istatistikleri, uykuyu ve fitness yaşını okur.",
     f3t: "İlk gününden itibaren", f3: "Saatini bu yıl mı aldın? Özetin aldığın günden başlar. Değilse bütün takvim yılını kapsar.",
-    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/move-recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/move-recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a> · <a href="https://github.com/sponsors/lukecan" target="_blank" rel="noopener">Bir kahve ısmarla ☕</a>',
+    legal: 'Garmin Connect veri export\'larıyla çalışır. Garmin ile bağlantılı değildir ve Garmin tarafından desteklenmez. Yorumlar eğlence ve motivasyon içindir, tıbbi tavsiye değildir. <a href="privacy.html">Gizlilik</a> · <a href="https://github.com/lukecan/move_recap" rel="noopener">Açık kaynak (MIT)</a> · <a href="https://github.com/lukecan/move_recap/issues/new/choose" target="_blank" rel="noopener">Geri bildirim ve hatalar</a> · <a href="https://github.com/sponsors/lukecan" target="_blank" rel="noopener">Bir kahve ısmarla ☕</a>',
     statusOpening: "Dosyan açılıyor…", statusReading: (i, n, f) => `Okunuyor (${i}/${n}): ${f}`, statusFailed: "Dosya okunurken bir sorun çıktı.",
     errNotZip: "Lütfen Garmin'in e-postasındaki .zip dosyasını (açmadan) ya da aktivite listesinin .csv dosyasını seç.",
     errNotExport: "Bu ZIP bir Garmin Connect export'una benzemiyor. “Request Data Export” sonrası Garmin'in e-postayla gönderdiği dosyayı kullan.",
@@ -325,7 +325,7 @@ function endCard(s, shown, extraCount = 0) {
     <div class="summary">${tiles.map(([v, k]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join("")}</div>
     <button class="share" id="shareAll" type="button">${L("Share my recap ↗", "Özetimi paylaş ↗")}</button>
     ${extraCount ? `<button class="more-cards" id="moreCards" type="button">${L(`${extraCount} more ${extraCount === 1 ? "card" : "cards"} →`, `${extraCount} kart daha →`)}</button>` : ""}
-    <a class="fb" href="https://github.com/lukecan/move-recap/issues/new/choose" target="_blank" rel="noopener">${L("Tell us what you think →", "Ne düşündüğünü bize yaz →")}</a>
+    <a class="fb" href="https://github.com/lukecan/move_recap/issues/new/choose" target="_blank" rel="noopener">${L("Tell us what you think →", "Ne düşündüğünü bize yaz →")}</a>
     <a class="fb" href="https://github.com/sponsors/lukecan" target="_blank" rel="noopener">${L("Enjoyed it? Buy me a coffee ☕", "Beğendin mi? Bana bir kahve ısmarla ☕")}</a>
     <div class="foot">${L("Your data never left this page", "Verilerin bu sayfadan hiç çıkmadı")}</div>`];
 }
